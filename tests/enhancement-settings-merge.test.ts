@@ -41,19 +41,19 @@ describe('mergeEnhancementSettingsForSave', () => {
     expect(merged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(true);
   });
 
-  it('persists wide list and search bar layout toggles with default off values', () => {
+  it('persists wide list and search bar layout toggles with default on values', () => {
     const current = structuredClone(DEFAULT_SETTINGS);
 
     const defaultMerged = mergeEnhancementSettingsForSave(current, {} as any);
-    const enabledMerged = mergeEnhancementSettingsForSave(current, {
-      enableWideLayout: { checked: true },
-      enableSearchBarLayout: { checked: true },
+    const disabledMerged = mergeEnhancementSettingsForSave(current, {
+      enableWideLayout: { checked: false },
+      enableSearchBarLayout: { checked: false },
     } as any);
 
-    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(false);
-    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(false);
-    expect(enabledMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(true);
-    expect(enabledMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(true);
+    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(true);
+    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(true);
+    expect(disabledMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(false);
+    expect(disabledMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(false);
   });
 
   it('persists the list status quick action toggle with a default off value', () => {
@@ -68,16 +68,31 @@ describe('mergeEnhancementSettingsForSave', () => {
     expect(enabledMerged.listEnhancement?.enableStatusQuickAction).toBe(true);
   });
 
-  it('persists the list title translation replacement toggle with a default off value', () => {
+  it('persists the list title translation toggles with default on values', () => {
     const current = structuredClone(DEFAULT_SETTINGS);
 
     const defaultMerged = mergeEnhancementSettingsForSave(current, {} as any);
-    const enabledMerged = mergeEnhancementSettingsForSave(current, {
-      replaceTitleWithTranslation: { checked: true },
+    const disabledMerged = mergeEnhancementSettingsForSave(current, {
+      enableTitleTranslation: { checked: false },
+      replaceTitleWithTranslation: { checked: false },
     } as any);
 
-    expect(defaultMerged.listEnhancement?.replaceTitleWithTranslation).toBe(false);
-    expect(enabledMerged.listEnhancement?.replaceTitleWithTranslation).toBe(true);
+    expect(defaultMerged.listEnhancement?.enableTitleTranslation).toBe(true);
+    expect(defaultMerged.listEnhancement?.replaceTitleWithTranslation).toBe(true);
+    expect(disabledMerged.listEnhancement?.enableTitleTranslation).toBe(false);
+    expect(disabledMerged.listEnhancement?.replaceTitleWithTranslation).toBe(false);
+  });
+
+  it('persists the image hover preview toggle with a default on value', () => {
+    const current = structuredClone(DEFAULT_SETTINGS);
+
+    const defaultMerged = mergeEnhancementSettingsForSave(current, {} as any);
+    const disabledMerged = mergeEnhancementSettingsForSave(current, {
+      enableImageHoverPreview: { checked: false },
+    } as any);
+
+    expect(defaultMerged.listEnhancement?.enableImageHoverPreview).toBe(true);
+    expect(disabledMerged.listEnhancement?.enableImageHoverPreview).toBe(false);
   });
 
   it('persists the online availability failure tag toggle with a default off value', () => {

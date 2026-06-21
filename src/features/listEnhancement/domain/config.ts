@@ -23,6 +23,7 @@ export interface ListEnhancementConfig {
   enableVideoPreview: boolean;
   enableVideoPreviewList?: boolean;
   enableVideoPreviewDetail?: boolean;
+  enableImageHoverPreview?: boolean;
   enableListOptimization: boolean;
   enableFullTitle?: boolean;
   enableTitleTranslation?: boolean;
@@ -67,10 +68,11 @@ export function createDefaultListEnhancementConfig(): ListEnhancementConfig {
     enableVideoPreview: true,
     enableVideoPreviewList: true,
     enableVideoPreviewDetail: true,
+    enableImageHoverPreview: true,
     enableListOptimization: true,
     enableFullTitle: true,
-    enableTitleTranslation: false,
-    replaceTitleWithTranslation: false,
+    enableTitleTranslation: true,
+    replaceTitleWithTranslation: true,
     enableScrollPaging: false,
     enableHighQualityCover: true,
     previewDelay: 1000,
@@ -88,8 +90,8 @@ export function createDefaultListEnhancementConfig(): ListEnhancementConfig {
       columnCount: 4,
       containerWidth: 100,
       enableContainerExpansion: false,
-      enableWideLayout: false,
-      enableSearchBarLayout: false,
+      enableWideLayout: true,
+      enableSearchBarLayout: true,
     },
     showStatusBadge: true,
     enableStatusQuickAction: false,

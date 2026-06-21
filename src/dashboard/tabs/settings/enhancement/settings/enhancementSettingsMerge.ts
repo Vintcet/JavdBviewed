@@ -10,6 +10,7 @@ type EnhancementSaveHost = {
   enableListVideoPreview?: HTMLInputElement;
   enableVideoPreviewList?: HTMLInputElement;
   enableVideoPreviewDetail?: HTMLInputElement;
+  enableImageHoverPreview?: HTMLInputElement;
   enableScrollPaging?: HTMLInputElement;
   previewDelay?: HTMLInputElement;
   previewVolume?: HTMLInputElement;
@@ -80,11 +81,12 @@ export function mergeEnhancementSettingsForSave(
       enableVideoPreview: host.enableListVideoPreview?.checked ?? existingListEnhancement.enableVideoPreview,
       enableVideoPreviewList: host.enableVideoPreviewList?.checked ?? (existingListEnhancement as any).enableVideoPreviewList,
       enableVideoPreviewDetail: host.enableVideoPreviewDetail?.checked ?? (existingListEnhancement as any).enableVideoPreviewDetail,
+      enableImageHoverPreview: host.enableImageHoverPreview?.checked ?? (existingListEnhancement as any).enableImageHoverPreview ?? true,
       enableScrollPaging: host.enableScrollPaging?.checked ?? existingListEnhancement.enableScrollPaging,
       enableListOptimization: true,
       enableFullTitle: host.enableFullTitle?.checked ?? (existingListEnhancement as any).enableFullTitle ?? true,
-      enableTitleTranslation: host.enableTitleTranslation?.checked ?? (existingListEnhancement as any).enableTitleTranslation ?? false,
-      replaceTitleWithTranslation: host.replaceTitleWithTranslation?.checked ?? (existingListEnhancement as any).replaceTitleWithTranslation ?? false,
+      enableTitleTranslation: host.enableTitleTranslation?.checked ?? (existingListEnhancement as any).enableTitleTranslation ?? true,
+      replaceTitleWithTranslation: host.replaceTitleWithTranslation?.checked ?? (existingListEnhancement as any).replaceTitleWithTranslation ?? true,
       previewDelay: parseNumber(host.previewDelay?.value, existingListEnhancement.previewDelay ?? 1000),
       previewVolume: parseNumber(host.previewVolume?.value, existingListEnhancement.previewVolume ?? 0.2),
       enableRightClickBackground: true,
@@ -98,8 +100,8 @@ export function mergeEnhancementSettingsForSave(
         columnCount: parseNumber(host.listColumnCount?.value, existingListDisplayControl.columnCount ?? 4),
         containerWidth: parseNumber(host.listContainerWidth?.value, existingListDisplayControl.containerWidth ?? 100),
         enableContainerExpansion: host.enableContainerExpansion?.checked ?? existingListDisplayControl.enableContainerExpansion ?? false,
-        enableWideLayout: host.enableWideLayout?.checked ?? existingListDisplayControl.enableWideLayout ?? false,
-        enableSearchBarLayout: host.enableSearchBarLayout?.checked ?? existingListDisplayControl.enableSearchBarLayout ?? false,
+        enableWideLayout: host.enableWideLayout?.checked ?? existingListDisplayControl.enableWideLayout ?? true,
+        enableSearchBarLayout: host.enableSearchBarLayout?.checked ?? existingListDisplayControl.enableSearchBarLayout ?? true,
       },
       showStatusBadge: host.showStatusBadge?.checked ?? (existingListEnhancement as any).showStatusBadge ?? true,
       enableStatusQuickAction: host.enableStatusQuickAction?.checked ?? (existingListEnhancement as any).enableStatusQuickAction ?? false,

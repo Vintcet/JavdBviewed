@@ -81,6 +81,7 @@ export function doSetSettings(host: EnhancementSettingsSyncHost, settings: Parti
       if (host.enableListVideoPreview && typeof le.enableVideoPreview === 'boolean') host.enableListVideoPreview.checked = le.enableVideoPreview;
       if (host.enableVideoPreviewList && typeof le.enableVideoPreviewList === 'boolean') host.enableVideoPreviewList.checked = le.enableVideoPreviewList;
       if (host.enableVideoPreviewDetail && typeof le.enableVideoPreviewDetail === 'boolean') host.enableVideoPreviewDetail.checked = le.enableVideoPreviewDetail;
+      if (host.enableImageHoverPreview && typeof le.enableImageHoverPreview === 'boolean') host.enableImageHoverPreview.checked = le.enableImageHoverPreview;
       if (host.enableScrollPaging && typeof le.enableScrollPaging === 'boolean') host.enableScrollPaging.checked = le.enableScrollPaging;
       if (host.enableFullTitle && typeof le.enableFullTitle === 'boolean') host.enableFullTitle.checked = le.enableFullTitle;
       if (host.enableTitleTranslation && typeof le.enableTitleTranslation === 'boolean') host.enableTitleTranslation.checked = le.enableTitleTranslation;

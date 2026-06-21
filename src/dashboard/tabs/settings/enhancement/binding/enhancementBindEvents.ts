@@ -22,6 +22,7 @@ export function bindEvents(host: EnhancementBindEventsHost): void {
   host.enableClickEnhancementList?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableClickEnhancementDetail?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableListVideoPreview?.addEventListener('change', host.handleSettingChange.bind(host));
+  host.enableImageHoverPreview?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableVideoPreviewList?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableVideoPreviewDetail?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableScrollPaging?.addEventListener('change', host.handleSettingChange.bind(host));

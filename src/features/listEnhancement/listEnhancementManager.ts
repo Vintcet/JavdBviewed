@@ -55,6 +55,10 @@ import {
   type PreviewHoverController,
 } from './ui/previewHoverController';
 import {
+  createImageHoverPreviewController,
+  type ImageHoverPreviewController,
+} from './ui/imageHoverPreviewController';
+import {
   attachListClickEnhancement,
 } from './ui/clickEnhancement';
 import {
@@ -92,6 +96,10 @@ class ListEnhancementManager {
     activatePreviewVideoPreload,
     releasePreviewVideoMedia,
     runtimeSendMessage: (message) => chrome.runtime.sendMessage(message),
+  });
+  private readonly imageHoverPreviewController: ImageHoverPreviewController = createImageHoverPreviewController({
+    document,
+    window,
   });
   private readonly scrollPagingController: ListScrollPagingController = createListScrollPagingController({
     document,
@@ -180,8 +188,8 @@ class ListEnhancementManager {
           columnCount: currentControl.columnCount,
           containerWidth: currentControl.containerWidth,
           enableContainerExpansion: currentControl.enableContainerExpansion ?? false,
-          enableWideLayout: currentControl.enableWideLayout ?? false,
-          enableSearchBarLayout: currentControl.enableSearchBarLayout ?? false
+          enableWideLayout: currentControl.enableWideLayout ?? true,
+          enableSearchBarLayout: currentControl.enableSearchBarLayout ?? true
         };
       }
     }
@@ -199,6 +207,13 @@ class ListEnhancementManager {
     );
     if (titlePresentationChanged) {
       this.reapplyTitleEnhancementsForAll();
+    }
+
+    if (oldConfig.enableImageHoverPreview !== this.config.enableImageHoverPreview) {
+      this.imageHoverPreviewController.destroy();
+      if (this.config.enableImageHoverPreview !== false) {
+        this.reapplyImageHoverPreviewForAll();
+      }
     }
   }
 
@@ -370,8 +385,8 @@ class ListEnhancementManager {
         columnCount: this.config.listDisplayControl.columnCount,
         containerWidth: this.config.listDisplayControl.containerWidth,
         enableContainerExpansion: this.config.listDisplayControl.enableContainerExpansion ?? false,
-        enableWideLayout: this.config.listDisplayControl.enableWideLayout ?? false,
-        enableSearchBarLayout: this.config.listDisplayControl.enableSearchBarLayout ?? false
+        enableWideLayout: this.config.listDisplayControl.enableWideLayout ?? true,
+        enableSearchBarLayout: this.config.listDisplayControl.enableSearchBarLayout ?? true
       };
     }
 
@@ -443,6 +458,10 @@ class ListEnhancementManager {
 
     if (this.config.enableVideoPreview && this.config.enableVideoPreviewList !== false) {
       this.enhanceVideoPreview(item, videoInfo);
+    }
+
+    if (this.config.enableImageHoverPreview !== false) {
+      this.enhanceImageHoverPreview(item);
     }
 
     if (this.config.enableListOptimization) {
@@ -528,6 +547,17 @@ class ListEnhancementManager {
     if (!coverElement) return;
 
     this.previewHoverController.attach(coverElement, videoInfo);
+  }
+
+  private enhanceImageHoverPreview(item: HTMLElement): void {
+    const coverElement = item.querySelector('.cover') as HTMLElement;
+    if (!coverElement) return;
+    this.imageHoverPreviewController.attach(coverElement);
+  }
+
+  private reapplyImageHoverPreviewForAll(): void {
+    const items = document.querySelectorAll('.movie-list .item');
+    items.forEach(item => this.enhanceImageHoverPreview(item as HTMLElement));
   }
 
   private optimizeListItem(item: HTMLElement, videoInfo: { code: string; title: string; url: string }): void {

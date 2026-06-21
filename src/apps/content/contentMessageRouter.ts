@@ -60,8 +60,9 @@ export function installContentMessageRouter(): void {
                 try {
                     listEnhancementManager.updateConfig({
                         enableFullTitle: (settings.listEnhancement as any)?.enableFullTitle !== false,
-                        enableTitleTranslation: (settings.listEnhancement as any)?.enableTitleTranslation === true,
-                        replaceTitleWithTranslation: (settings.listEnhancement as any)?.replaceTitleWithTranslation === true,
+                        enableImageHoverPreview: (settings.listEnhancement as any)?.enableImageHoverPreview !== false,
+                        enableTitleTranslation: (settings.listEnhancement as any)?.enableTitleTranslation !== false,
+                        replaceTitleWithTranslation: (settings.listEnhancement as any)?.replaceTitleWithTranslation !== false,
                         hideBlacklistedActorsInList: (settings.listEnhancement as any)?.hideBlacklistedActorsInList === true,
                         hideNonFavoritedActorsInList: (settings.listEnhancement as any)?.hideNonFavoritedActorsInList === true,
                         hideUnrecognizedActorsInList: (settings.listEnhancement as any)?.hideUnrecognizedActorsInList !== false,
@@ -71,8 +72,8 @@ export function installContentMessageRouter(): void {
                             columnCount: (settings.listEnhancement as any)?.listDisplayControl?.columnCount || 4,
                             containerWidth: (settings.listEnhancement as any)?.listDisplayControl?.containerWidth || 100,
                             enableContainerExpansion: (settings.listEnhancement as any)?.listDisplayControl?.enableContainerExpansion === true,
-                            enableWideLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableWideLayout === true,
-                            enableSearchBarLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableSearchBarLayout === true,
+                            enableWideLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableWideLayout !== false,
+                            enableSearchBarLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableSearchBarLayout !== false,
                         },
                         popularityEffects: {
                             enabled: (settings.listEnhancement as any)?.popularityEffects?.enabled === true,

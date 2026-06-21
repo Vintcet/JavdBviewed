@@ -35,6 +35,7 @@ export function initializeElements(host: EnhancementInitHost): void {
     ['enableClickEnhancementList', 'enableClickEnhancementList'],
     ['enableClickEnhancementDetail', 'enableClickEnhancementDetail'],
     ['enableVideoPreview', 'enableListVideoPreview'],
+    ['enableImageHoverPreview', 'enableImageHoverPreview'],
     ['enableVideoPreviewList', 'enableVideoPreviewList'],
     ['enableVideoPreviewDetail', 'enableVideoPreviewDetail'],
     ['enableScrollPaging', 'enableScrollPaging'],

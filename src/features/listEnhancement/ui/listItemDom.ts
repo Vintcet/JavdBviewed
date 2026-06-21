@@ -61,6 +61,9 @@ export function optimizeListItemTitle(
   }
 
   const showFullTitle = options.showFullTitle !== false;
+  if (videoInfo.title && !titleElement.getAttribute('data-x-original-title')) {
+    titleElement.setAttribute('title', videoInfo.title);
+  }
   if (!showFullTitle && item.querySelector('.tags')) {
     titleElement.classList.add('x-ellipsis');
   } else {
