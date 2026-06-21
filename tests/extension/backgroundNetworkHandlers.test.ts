@@ -69,6 +69,37 @@ describe('background network message handlers', () => {
     });
   });
 
+  it('does not log aborted external fetches as errors', async () => {
+    const sendResponse = vi.fn();
+    const abortError = Object.assign(new Error('signal is aborted without reason'), { name: 'AbortError' });
+    const scheduler = {
+      enqueue: vi.fn(async () => {
+        throw abortError;
+      }),
+    };
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleInfo = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    await handleExternalDataFetch({
+      url: 'https://example.com/slow',
+      options: { timeout: 1000 },
+    }, sendResponse, scheduler as any);
+
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(consoleInfo).toHaveBeenCalledWith(
+      '[Background] External data fetch aborted:',
+      'signal is aborted without reason',
+    );
+    expect(sendResponse).toHaveBeenCalledWith({
+      success: false,
+      error: 'signal is aborted without reason',
+      code: 'ABORTED',
+    });
+
+    consoleError.mockRestore();
+    consoleInfo.mockRestore();
+  });
+
   it('extracts an external cover URL from BlogJav search results', async () => {
     const sendResponse = vi.fn();
     const fetchImpl = vi.fn(async () => new Response(`

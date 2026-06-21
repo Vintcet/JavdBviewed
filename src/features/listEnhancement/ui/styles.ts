@@ -393,10 +393,10 @@ export const LIST_ENHANCEMENT_BASE_STYLES = `
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       white-space: normal !important;
-      line-height: 1.35 !important;
-      height: calc(1.35em * 3) !important;
-      min-height: calc(1.35em * 3) !important;
-      max-height: calc(1.35em * 3) !important;
+      line-height: 1.4 !important;
+      height: calc(1.4em * 3 + 2px) !important;
+      min-height: calc(1.4em * 3 + 2px) !important;
+      max-height: calc(1.4em * 3 + 2px) !important;
       margin-bottom: 4px !important;
       box-sizing: border-box !important;
       display: -webkit-box !important;

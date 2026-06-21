@@ -1,4 +1,5 @@
 let hideTimer: number | null = null;
+let maxLoadingTimer: number | null = null;
 
 function ensureStyles(): void {
   if (document.getElementById('enhancement-loading-styles')) return;
@@ -73,6 +74,10 @@ export function showEnhancementLoading(pageType: 'video' | 'actor'): void {
     window.clearTimeout(hideTimer);
     hideTimer = null;
   }
+  if (maxLoadingTimer) {
+    window.clearTimeout(maxLoadingTimer);
+    maxLoadingTimer = null;
+  }
   const indicator = getIndicator() || createIndicator();
   const spinner = indicator.querySelector('.enhancement-spinner') as HTMLElement | null;
   if (!spinner) {
@@ -86,9 +91,20 @@ export function showEnhancementLoading(pageType: 'video' | 'actor'): void {
   indicator.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.95))';
   indicator.style.animation = 'enhancementSlideInRight 0.3s ease-out';
   if (!indicator.parentElement) document.body.appendChild(indicator);
+
+  const maxVisibleMs = pageType === 'actor' ? 3500 : 12000;
+  maxLoadingTimer = window.setTimeout(() => {
+    if (getIndicator() === indicator) {
+      hideEnhancementIndicator();
+    }
+  }, maxVisibleMs);
 }
 
 export function showEnhancementDone(): void {
+  if (maxLoadingTimer) {
+    window.clearTimeout(maxLoadingTimer);
+    maxLoadingTimer = null;
+  }
   const indicator = getIndicator() || createIndicator();
   const spinner = indicator.querySelector('.enhancement-spinner');
   if (spinner) spinner.remove();
@@ -103,6 +119,14 @@ export function showEnhancementDone(): void {
 }
 
 export function hideEnhancementIndicator(): void {
+  if (hideTimer) {
+    window.clearTimeout(hideTimer);
+    hideTimer = null;
+  }
+  if (maxLoadingTimer) {
+    window.clearTimeout(maxLoadingTimer);
+    maxLoadingTimer = null;
+  }
   const indicator = getIndicator();
   if (!indicator) return;
   indicator.style.animation = 'enhancementSlideOutRight 0.3s ease-out';

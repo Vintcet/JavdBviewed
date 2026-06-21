@@ -7,12 +7,21 @@ export interface RequestSchedulerLike {
   enqueue: (url: string, init?: RequestInit) => Promise<Response>;
 }
 
+function isAbortError(error: unknown): boolean {
+  return !!error
+    && typeof error === 'object'
+    && 'name' in error
+    && (error as { name?: string }).name === 'AbortError';
+}
+
 export async function handleExternalDataFetch(
   message: any,
   sendResponse: SendResponse,
   requestScheduler: RequestSchedulerLike = defaultRequestScheduler,
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
+  let timedOut = false;
+  let timeoutMsForError = 10000;
   try {
     const url = message?.url;
     const options = (message?.options || {}) as any;
@@ -24,7 +33,11 @@ export async function handleExternalDataFetch(
 
     const controller = new AbortController();
     const timeoutMs = typeof options.timeout === 'number' ? options.timeout : 10000;
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    timeoutMsForError = timeoutMs;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
 
     const reqInit: RequestInit = {
       method: options.method || 'GET',
@@ -49,6 +62,12 @@ export async function handleExternalDataFetch(
       clearTimeout(timer);
     }
   } catch (error: any) {
+    if (isAbortError(error)) {
+      const errorMessage = timedOut ? `Request timed out after ${timeoutMsForError} ms` : (error?.message || 'Request aborted');
+      console.info('[Background] External data fetch aborted:', errorMessage);
+      sendResponse({ success: false, error: errorMessage, code: timedOut ? 'TIMEOUT' : 'ABORTED' });
+      return;
+    }
     console.error('[Background] Failed to fetch external data:', error);
     sendResponse({ success: false, error: error.message });
   }
