@@ -1237,6 +1237,43 @@ export class MagnetSearchManager {
     if (/4k|2160p/i.test(nameText)) {
       name?.classList.add('jdb-magnet-title-4k');
     }
+
+    const magnetUrl = link?.href || '';
+    if (magnetUrl.startsWith('magnet:')) {
+      this.ensureNativeDrive115Button(row, magnetUrl, (nameText || link?.textContent || 'magnet').trim());
+    }
+  }
+
+  private ensureNativeDrive115Button(row: HTMLElement, magnetUrl: string, magnetName: string): void {
+    let button = row.querySelector<HTMLButtonElement>('.drive115-push-btn');
+    if (button) {
+      button.title = '推送到115网盘离线下载';
+      button.innerHTML = '&nbsp;115下载&nbsp;';
+      return;
+    }
+
+    let buttonsColumn = row.querySelector<HTMLElement>('.buttons');
+    if (!buttonsColumn) {
+      buttonsColumn = document.createElement('div');
+      buttonsColumn.className = 'buttons';
+      buttonsColumn.style.display = 'flex';
+      buttonsColumn.style.alignItems = 'center';
+      buttonsColumn.style.gap = '6px';
+      row.appendChild(buttonsColumn);
+    }
+
+    button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'button is-success is-small drive115-push-btn';
+    button.title = '推送到115网盘离线下载';
+    button.innerHTML = '&nbsp;115下载&nbsp;';
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.push115(button!, magnetUrl, magnetName);
+    });
+
+    buttonsColumn.appendChild(button);
   }
 
   /**
@@ -1367,7 +1404,7 @@ export class MagnetSearchManager {
     const push115Button = document.createElement('button');
     push115Button.className = 'button is-success is-small drive115-push-btn';
     push115Button.title = '推送到115网盘离线下载';
-    push115Button.innerHTML = '&nbsp;推送115&nbsp;';
+    push115Button.innerHTML = '&nbsp;115下载&nbsp;';
     push115Button.addEventListener('click', () => this.push115(push115Button, result.magnet, result.name));
 
     buttonsColumn.appendChild(copyButton);

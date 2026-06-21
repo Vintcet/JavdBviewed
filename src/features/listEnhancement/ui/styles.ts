@@ -394,13 +394,16 @@ export const LIST_ENHANCEMENT_BASE_STYLES = `
       text-overflow: ellipsis !important;
       white-space: normal !important;
       line-height: 1.35 !important;
-      height: 4.05em !important;
-      min-height: 4.05em !important;
-      max-height: 4.05em !important;
+      height: 80px !important;
+      min-height: 80px !important;
+      max-height: 80px !important;
+      margin-bottom: 4px !important;
+      box-sizing: border-box !important;
       display: -webkit-box !important;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical !important;
+      -webkit-line-clamp: 3 !important;
       word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     .x-ellipsis {

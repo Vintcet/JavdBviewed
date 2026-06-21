@@ -130,7 +130,8 @@ async function inject115ButtonsIntoNativeMagnetList(): Promise<void> {
             const btn = document.createElement('button');
             btn.className = 'button is-success is-small drive115-push-btn';
             (btn as HTMLButtonElement).style.marginLeft = '5px';
-            btn.innerHTML = '&nbsp;推送115&nbsp;';
+            btn.title = '推送到115网盘离线下载';
+            btn.innerHTML = '&nbsp;115下载&nbsp;';
             btn.addEventListener('click', () => {
                 log(`[Drive115] Push button clicked: ${videoId} | ${magnetName}`);
                 void handlePushToDrive115(btn, videoId, magnetLink.href, magnetName).catch((error) => {
@@ -465,7 +466,7 @@ export async function handlePushToDrive115(
 
         // 3秒后恢复原状态
         setTimeout(() => {
-            button.innerHTML = originalText || '&nbsp;推送115&nbsp;';
+            button.innerHTML = originalText || '&nbsp;115下载&nbsp;';
             button.disabled = false;
             button.className = 'button is-success is-small drive115-push-btn';
         }, 3000);
