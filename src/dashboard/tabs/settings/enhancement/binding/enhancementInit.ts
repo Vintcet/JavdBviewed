@@ -77,6 +77,7 @@ export function initializeElements(host: EnhancementInitHost): void {
     ['enableSearchBarLayout', 'enableSearchBarLayout'],
     ['enableFullTitle', 'enableFullTitle'],
     ['enableTitleTranslation', 'enableTitleTranslation'],
+    ['replaceTitleWithTranslation', 'replaceTitleWithTranslation'],
     ['showStatusBadge', 'showStatusBadge'],
     ['enableStatusQuickAction', 'enableStatusQuickAction'],
     ['enablePopularityEffects', 'enablePopularityEffects'],

@@ -26,6 +26,7 @@ export interface ListEnhancementConfig {
   enableListOptimization: boolean;
   enableFullTitle?: boolean;
   enableTitleTranslation?: boolean;
+  replaceTitleWithTranslation?: boolean;
   enableScrollPaging: boolean;
   enableHighQualityCover: boolean;
   previewDelay: number;
@@ -69,6 +70,7 @@ export function createDefaultListEnhancementConfig(): ListEnhancementConfig {
     enableListOptimization: true,
     enableFullTitle: true,
     enableTitleTranslation: false,
+    replaceTitleWithTranslation: false,
     enableScrollPaging: false,
     enableHighQualityCover: true,
     previewDelay: 1000,

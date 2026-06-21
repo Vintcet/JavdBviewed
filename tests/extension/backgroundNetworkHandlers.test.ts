@@ -41,6 +41,34 @@ describe('background network message handlers', () => {
     });
   });
 
+  it('can bypass the request scheduler for latency-sensitive external fetches', async () => {
+    const sendResponse = vi.fn();
+    const scheduler = {
+      enqueue: vi.fn(),
+    };
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ translation: '中文标题' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }));
+
+    await handleExternalDataFetch({
+      url: 'https://translate-pa.googleapis.com/v1/translate?query.text=test',
+      options: { responseType: 'json', skipScheduler: true },
+    }, sendResponse, scheduler as any, fetchImpl as any);
+
+    expect(scheduler.enqueue).not.toHaveBeenCalled();
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://translate-pa.googleapis.com/v1/translate?query.text=test',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(sendResponse).toHaveBeenCalledWith({
+      success: true,
+      data: { translation: '中文标题' },
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  });
+
   it('extracts an external cover URL from BlogJav search results', async () => {
     const sendResponse = vi.fn();
     const fetchImpl = vi.fn(async () => new Response(`

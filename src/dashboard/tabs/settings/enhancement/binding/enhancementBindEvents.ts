@@ -65,6 +65,7 @@ export function bindEvents(host: EnhancementBindEventsHost): void {
   host.enableSearchBarLayout?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableFullTitle?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableTitleTranslation?.addEventListener('change', host.handleSettingChange.bind(host));
+  host.replaceTitleWithTranslation?.addEventListener('change', host.handleSettingChange.bind(host));
   if (host.addFilterRuleBtn) host.addFilterRuleBtn.addEventListener('click', host.addFilterRule.bind(host));
   const previewSourceRadios = [host.previewSourceAuto, host.previewSourceJavDB, host.previewSourceJavSpyl, host.previewSourceAVPreview, host.previewSourceVBGFL].filter(Boolean) as HTMLInputElement[];
   previewSourceRadios.forEach(r => r.addEventListener('change', host.handleSettingChange.bind(host)));

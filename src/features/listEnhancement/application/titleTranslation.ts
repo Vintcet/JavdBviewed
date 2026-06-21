@@ -8,8 +8,12 @@ interface CacheEntry {
 }
 
 const CACHE_PREFIX = 'jdb_list_title_translation_v1:';
+const JHS_TRANSLATE_CACHE_KEY = 'jhs_translate';
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_CONCURRENT_TRANSLATIONS = 3;
+const ORIGINAL_TITLE_ATTR = 'data-x-original-title';
+const TRANSLATED_TITLE_ATTR = 'data-x-translated-title';
+const TRANSLATION_MODE_ATTR = 'data-title-translation-mode';
 
 const memoryCache = new Map<string, CacheEntry>();
 const pendingByKey = new Map<string, Promise<string | null>>();
@@ -72,6 +76,29 @@ function writeCache(key: string, translated: string): void {
   } catch {}
 }
 
+function readJhsCache(code?: string): string | null {
+  if (!code) return null;
+  try {
+    const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const cached = parsed?.[code];
+    return typeof cached === 'string' && cached.trim() ? normalizeTitle(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJhsCache(code: string | undefined, translated: string): void {
+  if (!code) return;
+  try {
+    const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+    parsed[code] = translated;
+    localStorage.setItem(JHS_TRANSLATE_CACHE_KEY, JSON.stringify(parsed));
+  } catch {}
+}
+
 async function runLimited<T>(task: () => Promise<T>): Promise<T> {
   if (activeCount >= MAX_CONCURRENT_TRANSLATIONS) {
     await new Promise<void>(resolve => queue.push(resolve));
@@ -87,9 +114,12 @@ async function runLimited<T>(task: () => Promise<T>): Promise<T> {
   }
 }
 
-async function translateTitle(original: string): Promise<string | null> {
+async function translateTitle(original: string, code?: string): Promise<string | null> {
   const normalized = normalizeTitle(original);
   if (!normalized || !needsTranslation(normalized)) return null;
+
+  const jhsCached = readJhsCache(code);
+  if (jhsCached) return jhsCached;
 
   const cacheKey = getCacheKey(normalized);
   const cached = readCache(cacheKey);
@@ -105,6 +135,7 @@ async function translateTitle(original: string): Promise<string | null> {
       return null;
     }
     writeCache(cacheKey, translated);
+    writeJhsCache(code, translated);
     return translated;
   }).finally(() => {
     pendingByKey.delete(cacheKey);
@@ -124,8 +155,56 @@ function ensureTranslationElement(titleElement: HTMLElement): HTMLElement {
   return element;
 }
 
-export async function translateListItemTitle(item: HTMLElement, videoInfo: ListPreviewVideoInfo): Promise<void> {
-  if (item.getAttribute('data-title-translation-state') === 'done') return;
+function setTitleText(titleElement: HTMLElement, text: string): void {
+  const textNodes = Array.from(titleElement.childNodes)
+    .filter((node): node is Text => node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+
+  if (textNodes.length === 0) {
+    titleElement.appendChild(document.createTextNode(` ${text}`));
+    return;
+  }
+
+  textNodes[0].textContent = ` ${text}`;
+  textNodes.slice(1).forEach(node => {
+    node.textContent = '';
+  });
+}
+
+function restoreOriginalTitle(titleElement: HTMLElement): void {
+  const original = titleElement.getAttribute(ORIGINAL_TITLE_ATTR);
+  if (!original) return;
+  setTitleText(titleElement, original);
+  titleElement.removeAttribute(ORIGINAL_TITLE_ATTR);
+  titleElement.removeAttribute(TRANSLATED_TITLE_ATTR);
+  titleElement.removeAttribute('title');
+}
+
+function replaceTitleWithTranslation(titleElement: HTMLElement, original: string, translated: string): void {
+  if (!titleElement.getAttribute(ORIGINAL_TITLE_ATTR)) {
+    titleElement.setAttribute(ORIGINAL_TITLE_ATTR, original);
+  }
+  titleElement.setAttribute(TRANSLATED_TITLE_ATTR, translated);
+  titleElement.setAttribute('title', translated);
+  titleElement.querySelectorAll('.x-title-translation').forEach(node => node.remove());
+  setTitleText(titleElement, translated);
+}
+
+export interface TranslateListItemTitleOptions {
+  replaceOriginal?: boolean;
+}
+
+export async function translateListItemTitle(
+  item: HTMLElement,
+  videoInfo: ListPreviewVideoInfo,
+  options: TranslateListItemTitleOptions = {},
+): Promise<void> {
+  const mode = options.replaceOriginal === true ? 'replace' : 'append';
+  if (
+    item.getAttribute('data-title-translation-state') === 'done' &&
+    item.getAttribute(TRANSLATION_MODE_ATTR) === mode
+  ) {
+    return;
+  }
 
   const titleElement = item.querySelector<HTMLElement>('div.video-title');
   if (!titleElement) return;
@@ -134,29 +213,46 @@ export async function translateListItemTitle(item: HTMLElement, videoInfo: ListP
   if (!original || !needsTranslation(original)) return;
 
   item.setAttribute('data-title-translation-state', 'pending');
-  const translationElement = ensureTranslationElement(titleElement);
-  translationElement.textContent = '翻译中...';
-  translationElement.setAttribute('data-state', 'pending');
+  item.setAttribute(TRANSLATION_MODE_ATTR, mode);
+
+  let translationElement: HTMLElement | null = null;
+  if (mode === 'append') {
+    restoreOriginalTitle(titleElement);
+    translationElement = ensureTranslationElement(titleElement);
+    translationElement.textContent = '翻译中...';
+    translationElement.setAttribute('data-state', 'pending');
+  } else {
+    titleElement.querySelectorAll('.x-title-translation').forEach(node => node.remove());
+  }
 
   try {
-    const translated = await translateTitle(original);
+    const translated = await translateTitle(original, videoInfo.code);
     if (!translated) {
-      translationElement.remove();
+      translationElement?.remove();
       item.removeAttribute('data-title-translation-state');
+      item.removeAttribute(TRANSLATION_MODE_ATTR);
       return;
     }
 
-    translationElement.textContent = translated;
-    translationElement.setAttribute('data-state', 'done');
-    translationElement.setAttribute('title', translated);
+    if (mode === 'replace') {
+      replaceTitleWithTranslation(titleElement, original, translated);
+    } else if (translationElement) {
+      translationElement.textContent = translated;
+      translationElement.setAttribute('data-state', 'done');
+      translationElement.setAttribute('title', translated);
+    }
     item.setAttribute('data-title-translation-state', 'done');
   } catch {
-    translationElement.remove();
+    translationElement?.remove();
     item.removeAttribute('data-title-translation-state');
+    item.removeAttribute(TRANSLATION_MODE_ATTR);
   }
 }
 
 export function clearListItemTitleTranslation(item: HTMLElement): void {
+  const titleElement = item.querySelector<HTMLElement>('div.video-title');
+  if (titleElement) restoreOriginalTitle(titleElement);
   item.querySelectorAll('.x-title-translation').forEach(node => node.remove());
   item.removeAttribute('data-title-translation-state');
+  item.removeAttribute(TRANSLATION_MODE_ATTR);
 }

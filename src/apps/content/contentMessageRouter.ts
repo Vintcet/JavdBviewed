@@ -61,6 +61,7 @@ export function installContentMessageRouter(): void {
                     listEnhancementManager.updateConfig({
                         enableFullTitle: (settings.listEnhancement as any)?.enableFullTitle !== false,
                         enableTitleTranslation: (settings.listEnhancement as any)?.enableTitleTranslation === true,
+                        replaceTitleWithTranslation: (settings.listEnhancement as any)?.replaceTitleWithTranslation === true,
                         hideBlacklistedActorsInList: (settings.listEnhancement as any)?.hideBlacklistedActorsInList === true,
                         hideNonFavoritedActorsInList: (settings.listEnhancement as any)?.hideNonFavoritedActorsInList === true,
                         hideUnrecognizedActorsInList: (settings.listEnhancement as any)?.hideUnrecognizedActorsInList !== false,

@@ -49,6 +49,7 @@
                                     <input type="checkbox" id="enableSearchBarLayout">
                                     <input type="checkbox" id="enableFullTitle">
                                     <input type="checkbox" id="enableTitleTranslation">
+                                    <input type="checkbox" id="replaceTitleWithTranslation">
                                     <input type="checkbox" id="showStatusBadge">
                                     <input type="checkbox" id="enableStatusQuickAction">
                                     <!-- 影片页增强子项（右侧通用开关的状态源） -->
@@ -805,6 +806,24 @@
                                         <p class="input-description">
                                             <strong>效果：</strong>在列表页标题下方自动追加中文翻译，使用 Google 翻译并缓存结果。<br>
                                             <strong>说明：</strong>默认关闭；开启后会对当前列表中含日文/汉字的标题发起翻译请求。
+                                        </p>
+                                    </div>
+
+                                    <div class="form-group" data-subtab="list">
+                                        <label class="checkbox-label">
+                                            <div class="enhancement-feature-info">
+                                                <div class="enhancement-feature-title">
+                                                    <h6 class="enhancement-feature-name">🔁 译文替换原标题</h6>
+                                                    <span class="enhancement-feature-status available">可用</span>
+                                                </div>
+                                            </div>
+                                            <div class="enhancement-toggle-wrapper">
+                                                <button class="enhancement-toggle" data-target="replaceTitleWithTranslation"></button>
+                                            </div>
+                                        </label>
+                                        <p class="input-description">
+                                            <strong>效果：</strong>借鉴 JAV-JHS 的显示方式，列表页翻译完成后保留番号，并用中文译文替换原标题。<br>
+                                            <strong>说明：</strong>关闭时恢复为在标题下方追加译文。
                                         </p>
                                     </div>
 

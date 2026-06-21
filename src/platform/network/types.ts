@@ -4,6 +4,8 @@ export interface FetchOptions {
   headers?: Record<string, string>;
   referrer?: string;
   proxy?: boolean;
+  skipDefaultHeaders?: boolean;
+  skipScheduler?: boolean;
   responseType?: 'text' | 'json' | 'blob' | 'document';
 }
 

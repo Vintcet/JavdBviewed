@@ -109,12 +109,16 @@ export class HttpClient {
       retries = this.defaultRetries,
       responseType = 'json',
       referrer,
+      skipDefaultHeaders,
+      skipScheduler,
     } = config;
 
-    const requestHeaders = {
-      ...this.defaultHeaders,
-      ...headers,
-    };
+    const requestHeaders = skipDefaultHeaders
+      ? { ...headers }
+      : {
+          ...this.defaultHeaders,
+          ...headers,
+        };
 
     if (method === 'POST' && body && typeof body === 'string' && !requestHeaders['Content-Type']) {
       requestHeaders['Content-Type'] = 'application/json';
@@ -132,6 +136,7 @@ export class HttpClient {
             timeout,
             responseType,
             referrer,
+            skipScheduler,
           });
         }
 

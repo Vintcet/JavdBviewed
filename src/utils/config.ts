@@ -561,6 +561,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
         enableListOptimization: true,
         enableFullTitle: true,
         enableTitleTranslation: false,
+        replaceTitleWithTranslation: false,
         previewDelay: 1000,
         previewVolume: 0.2,
         enableRightClickBackground: true,

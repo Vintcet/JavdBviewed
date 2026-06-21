@@ -194,7 +194,8 @@ class ListEnhancementManager {
 
     const titlePresentationChanged = (
       oldConfig.enableFullTitle !== this.config.enableFullTitle ||
-      oldConfig.enableTitleTranslation !== this.config.enableTitleTranslation
+      oldConfig.enableTitleTranslation !== this.config.enableTitleTranslation ||
+      oldConfig.replaceTitleWithTranslation !== this.config.replaceTitleWithTranslation
     );
     if (titlePresentationChanged) {
       this.reapplyTitleEnhancementsForAll();
@@ -449,7 +450,9 @@ class ListEnhancementManager {
     }
 
     if (this.config.enableTitleTranslation) {
-      translateListItemTitle(item, videoInfo).catch(err => log('List title translation error:', err));
+      translateListItemTitle(item, videoInfo, {
+        replaceOriginal: this.config.replaceTitleWithTranslation === true,
+      }).catch(err => log('List title translation error:', err));
     } else {
       clearListItemTitleTranslation(item);
     }
@@ -545,7 +548,9 @@ class ListEnhancementManager {
         }
         if (this.config.enableTitleTranslation) {
           item.removeAttribute('data-title-translation-state');
-          translateListItemTitle(item, info).catch(err => log('List title translation error:', err));
+          translateListItemTitle(item, info, {
+            replaceOriginal: this.config.replaceTitleWithTranslation === true,
+          }).catch(err => log('List title translation error:', err));
         } else {
           clearListItemTitleTranslation(item);
         }

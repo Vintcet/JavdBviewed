@@ -54,6 +54,7 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.enableScrollPaging) host.enableScrollPaging.checked = listEnhancement.enableScrollPaging || false;
   if (host.enableFullTitle) host.enableFullTitle.checked = (listEnhancement as any).enableFullTitle !== false;
   if (host.enableTitleTranslation) host.enableTitleTranslation.checked = (listEnhancement as any).enableTitleTranslation === true;
+  if (host.replaceTitleWithTranslation) host.replaceTitleWithTranslation.checked = (listEnhancement as any).replaceTitleWithTranslation === true;
   if (host.enableWideLayout) host.enableWideLayout.checked = (listEnhancement as any).listDisplayControl?.enableWideLayout === true;
   if (host.enableSearchBarLayout) host.enableSearchBarLayout.checked = (listEnhancement as any).listDisplayControl?.enableSearchBarLayout === true;
   if (host.enableActorWatermark) host.enableActorWatermark.checked = (listEnhancement as any).enableActorWatermark === true;
@@ -121,6 +122,7 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.enableScrollPaging && typeof listEnhancement.enableScrollPaging === 'boolean') host.enableScrollPaging.checked = listEnhancement.enableScrollPaging;
   if (host.enableFullTitle && typeof (listEnhancement as any).enableFullTitle === 'boolean') host.enableFullTitle.checked = (listEnhancement as any).enableFullTitle;
   if (host.enableTitleTranslation && typeof (listEnhancement as any).enableTitleTranslation === 'boolean') host.enableTitleTranslation.checked = (listEnhancement as any).enableTitleTranslation;
+  if (host.replaceTitleWithTranslation && typeof (listEnhancement as any).replaceTitleWithTranslation === 'boolean') host.replaceTitleWithTranslation.checked = (listEnhancement as any).replaceTitleWithTranslation;
   if (host.enableActorWatermark && typeof (listEnhancement as any).enableActorWatermark === 'boolean') host.enableActorWatermark.checked = (listEnhancement as any).enableActorWatermark;
   if (host.actorWatermarkPosition && (listEnhancement as any).actorWatermarkPosition) host.actorWatermarkPosition.value = (listEnhancement as any).actorWatermarkPosition;
   if (host.actorWatermarkOpacity && typeof (listEnhancement as any).actorWatermarkOpacity === 'number') host.actorWatermarkOpacity.value = String((listEnhancement as any).actorWatermarkOpacity);

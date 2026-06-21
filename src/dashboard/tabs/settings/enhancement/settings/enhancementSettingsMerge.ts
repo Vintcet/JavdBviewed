@@ -23,6 +23,7 @@ type EnhancementSaveHost = {
   enableSearchBarLayout?: HTMLInputElement;
   enableFullTitle?: HTMLInputElement;
   enableTitleTranslation?: HTMLInputElement;
+  replaceTitleWithTranslation?: HTMLInputElement;
   showStatusBadge?: HTMLInputElement;
   enableStatusQuickAction?: HTMLInputElement;
   enablePopularityEffects?: HTMLInputElement;
@@ -83,6 +84,7 @@ export function mergeEnhancementSettingsForSave(
       enableListOptimization: true,
       enableFullTitle: host.enableFullTitle?.checked ?? (existingListEnhancement as any).enableFullTitle ?? true,
       enableTitleTranslation: host.enableTitleTranslation?.checked ?? (existingListEnhancement as any).enableTitleTranslation ?? false,
+      replaceTitleWithTranslation: host.replaceTitleWithTranslation?.checked ?? (existingListEnhancement as any).replaceTitleWithTranslation ?? false,
       previewDelay: parseNumber(host.previewDelay?.value, existingListEnhancement.previewDelay ?? 1000),
       previewVolume: parseNumber(host.previewVolume?.value, existingListEnhancement.previewVolume ?? 0.2),
       enableRightClickBackground: true,

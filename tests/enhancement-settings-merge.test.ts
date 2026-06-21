@@ -68,6 +68,18 @@ describe('mergeEnhancementSettingsForSave', () => {
     expect(enabledMerged.listEnhancement?.enableStatusQuickAction).toBe(true);
   });
 
+  it('persists the list title translation replacement toggle with a default off value', () => {
+    const current = structuredClone(DEFAULT_SETTINGS);
+
+    const defaultMerged = mergeEnhancementSettingsForSave(current, {} as any);
+    const enabledMerged = mergeEnhancementSettingsForSave(current, {
+      replaceTitleWithTranslation: { checked: true },
+    } as any);
+
+    expect(defaultMerged.listEnhancement?.replaceTitleWithTranslation).toBe(false);
+    expect(enabledMerged.listEnhancement?.replaceTitleWithTranslation).toBe(true);
+  });
+
   it('persists the online availability failure tag toggle with a default off value', () => {
     const current = structuredClone(DEFAULT_SETTINGS);
 

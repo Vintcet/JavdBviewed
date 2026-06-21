@@ -62,5 +62,6 @@ describe('getSettings listEnhancement regression', () => {
     expect(settings.listEnhancement.listDisplayControl.enableSearchBarLayout).toBe(false);
     expect(settings.listEnhancement.enableVideoPreview).toBe(true);
     expect(settings.listEnhancement.enableStatusQuickAction).toBe(false);
+    expect(settings.listEnhancement.replaceTitleWithTranslation).toBe(false);
   });
 });

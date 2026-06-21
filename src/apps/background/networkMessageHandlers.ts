@@ -11,6 +11,7 @@ export async function handleExternalDataFetch(
   message: any,
   sendResponse: SendResponse,
   requestScheduler: RequestSchedulerLike = defaultRequestScheduler,
+  fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
   try {
     const url = message?.url;
@@ -33,15 +34,20 @@ export async function handleExternalDataFetch(
       ...(typeof options.referrer === 'string' ? { referrer: options.referrer } : {}),
     };
 
-    const response = await requestScheduler.enqueue(url, reqInit);
-    let data: any;
-    if (responseType === 'json') data = await response.json().catch(() => null);
-    else if (responseType === 'blob') data = await response.blob();
-    else data = await response.text();
-    const headersObj: Record<string, string> = {};
-    try { response.headers.forEach((v, k) => { headersObj[k] = v; }); } catch {}
-    clearTimeout(timer);
-    sendResponse({ success: true, data, status: response.status, headers: headersObj });
+    try {
+      const response = options.skipScheduler === true
+        ? await fetchImpl(url, reqInit)
+        : await requestScheduler.enqueue(url, reqInit);
+      let data: any;
+      if (responseType === 'json') data = await response.json().catch(() => null);
+      else if (responseType === 'blob') data = await response.blob();
+      else data = await response.text();
+      const headersObj: Record<string, string> = {};
+      try { response.headers.forEach((v, k) => { headersObj[k] = v; }); } catch {}
+      sendResponse({ success: true, data, status: response.status, headers: headersObj });
+    } finally {
+      clearTimeout(timer);
+    }
   } catch (error: any) {
     console.error('[Background] Failed to fetch external data:', error);
     sendResponse({ success: false, error: error.message });
