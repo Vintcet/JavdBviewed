@@ -244,10 +244,36 @@ export const LIST_ENHANCEMENT_BASE_STYLES = `
       position: relative;
     }
 
+    .x-title-full {
+      overflow: visible !important;
+      text-overflow: initial !important;
+      white-space: normal !important;
+      height: auto !important;
+      max-height: none !important;
+      line-height: 1.35 !important;
+    }
+
     .x-ellipsis {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .x-title-translation {
+      display: block;
+      margin-top: 4px;
+      padding-left: 20px;
+      color: #2563eb;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: normal;
+      overflow: visible;
+      word-break: break-word;
+    }
+
+    .x-title-translation[data-state="pending"] {
+      color: #9ca3af;
+      font-style: italic;
     }
 
     /* 功能按钮样式 */

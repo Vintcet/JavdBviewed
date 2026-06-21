@@ -45,6 +45,8 @@
                                     <input type="checkbox" id="enableActorQuickActions">
                                     <input type="checkbox" id="enableListDisplayControl">
                                     <input type="checkbox" id="enableContainerExpansion">
+                                    <input type="checkbox" id="enableFullTitle">
+                                    <input type="checkbox" id="enableTitleTranslation">
                                     <input type="checkbox" id="showStatusBadge">
                                     <input type="checkbox" id="enableStatusQuickAction">
                                     <!-- 影片页增强子项（右侧通用开关的状态源） -->
@@ -740,6 +742,44 @@
                                         </div>
                                     </div>
                                     <!-- 列表页显示控制 结束 -->
+
+                                    <!-- 列表页标题显示 -->
+                                    <div class="form-group" data-subtab="list">
+                                        <label class="checkbox-label">
+                                            <div class="enhancement-feature-info">
+                                                <div class="enhancement-feature-title">
+                                                    <h6 class="enhancement-feature-name">📝 完整标题显示</h6>
+                                                    <span class="enhancement-feature-status available">可用</span>
+                                                </div>
+                                            </div>
+                                            <div class="enhancement-toggle-wrapper">
+                                                <button class="enhancement-toggle" data-target="enableFullTitle"></button>
+                                            </div>
+                                        </label>
+                                        <p class="input-description">
+                                            <strong>效果：</strong>借鉴 JAV-JHS 的列表布局处理，让影片标题自然换行完整显示，不再被单行省略。<br>
+                                            <strong>说明：</strong>开启后卡片高度会随标题长度变化，但能直接看到完整标题。
+                                        </p>
+                                    </div>
+
+                                    <!-- 列表页标题翻译 -->
+                                    <div class="form-group" data-subtab="list">
+                                        <label class="checkbox-label">
+                                            <div class="enhancement-feature-info">
+                                                <div class="enhancement-feature-title">
+                                                    <h6 class="enhancement-feature-name">🈳 列表标题翻译</h6>
+                                                    <span class="enhancement-feature-status available">可用</span>
+                                                </div>
+                                            </div>
+                                            <div class="enhancement-toggle-wrapper">
+                                                <button class="enhancement-toggle" data-target="enableTitleTranslation"></button>
+                                            </div>
+                                        </label>
+                                        <p class="input-description">
+                                            <strong>效果：</strong>在列表页标题下方自动追加中文翻译，使用 Google 翻译并缓存结果。<br>
+                                            <strong>说明：</strong>默认关闭；开启后会对当前列表中含日文/汉字的标题发起翻译请求。
+                                        </p>
+                                    </div>
 
                                     <!-- 🆕 状态标签显示 -->
                                     <div class="form-group" data-subtab="list">

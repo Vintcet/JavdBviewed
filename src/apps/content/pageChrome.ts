@@ -1,5 +1,7 @@
 import { log } from '../../features/contentState';
 
+let unwantedLinksObserver: MutationObserver | null = null;
+
 export function injectNavbarBadge(): void {
     try {
         if (document.getElementById('javdb-ext-badge')) return;
@@ -42,24 +44,36 @@ export function injectNavbarBadge(): void {
 
 export function removeUnwantedButtons(): void {
     try {
-        const appButtons = document.querySelectorAll('a[href*="app.javdb"], a[href*="t.me/javdbnews"]');
+        const appButtons = document.querySelectorAll('a[href*="app.javdb"], a[href*="t.me/javdbnews"], a[href*="theporndude.com"]');
         appButtons.forEach(button => {
             if (button.textContent?.includes('官方App') ||
                 button.textContent?.includes('JavDB公告') ||
-                button.textContent?.includes('Telegram')) {
+                button.textContent?.includes('Telegram') ||
+                button.getAttribute('href')?.includes('theporndude.com')) {
                 log(`Removing unwanted button: ${button.textContent}`);
                 button.remove();
             }
         });
 
-        const style = document.createElement('style');
-        style.textContent = `
+        if (!document.getElementById('javdb-ext-unwanted-links-style')) {
+            const style = document.createElement('style');
+            style.id = 'javdb-ext-unwanted-links-style';
+            style.textContent = `
             a[href*="app.javdb"]:not([href*="javdb.com"]),
-            a[href*="t.me/javdbnews"] {
+            a[href*="t.me/javdbnews"],
+            a[href*="theporndude.com"] {
                 display: none !important;
             }
         `;
-        document.head.appendChild(style);
+            document.head.appendChild(style);
+        }
+
+        if (!unwantedLinksObserver && document.body) {
+            unwantedLinksObserver = new MutationObserver(() => {
+                document.querySelectorAll('a[href*="theporndude.com"]').forEach(link => link.remove());
+            });
+            unwantedLinksObserver.observe(document.body, { childList: true, subtree: true });
+        }
 
         log('Unwanted buttons removal completed');
     } catch (error) {

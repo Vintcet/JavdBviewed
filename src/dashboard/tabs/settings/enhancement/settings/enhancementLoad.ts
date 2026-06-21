@@ -52,6 +52,8 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.enableVideoPreviewList) host.enableVideoPreviewList.checked = (listEnhancement as any).enableVideoPreviewList !== false;
   if (host.enableVideoPreviewDetail) host.enableVideoPreviewDetail.checked = (listEnhancement as any).enableVideoPreviewDetail !== false;
   if (host.enableScrollPaging) host.enableScrollPaging.checked = listEnhancement.enableScrollPaging || false;
+  if (host.enableFullTitle) host.enableFullTitle.checked = (listEnhancement as any).enableFullTitle !== false;
+  if (host.enableTitleTranslation) host.enableTitleTranslation.checked = (listEnhancement as any).enableTitleTranslation === true;
   if (host.enableActorWatermark) host.enableActorWatermark.checked = (listEnhancement as any).enableActorWatermark === true;
   if (host.showStatusBadge) host.showStatusBadge.checked = (listEnhancement as any).showStatusBadge !== false;
   if (host.enableStatusQuickAction) host.enableStatusQuickAction.checked = (listEnhancement as any).enableStatusQuickAction === true;
@@ -115,6 +117,8 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.enableVideoPreviewList && typeof (listEnhancement as any).enableVideoPreviewList === 'boolean') host.enableVideoPreviewList.checked = (listEnhancement as any).enableVideoPreviewList;
   if (host.enableVideoPreviewDetail && typeof (listEnhancement as any).enableVideoPreviewDetail === 'boolean') host.enableVideoPreviewDetail.checked = (listEnhancement as any).enableVideoPreviewDetail;
   if (host.enableScrollPaging && typeof listEnhancement.enableScrollPaging === 'boolean') host.enableScrollPaging.checked = listEnhancement.enableScrollPaging;
+  if (host.enableFullTitle && typeof (listEnhancement as any).enableFullTitle === 'boolean') host.enableFullTitle.checked = (listEnhancement as any).enableFullTitle;
+  if (host.enableTitleTranslation && typeof (listEnhancement as any).enableTitleTranslation === 'boolean') host.enableTitleTranslation.checked = (listEnhancement as any).enableTitleTranslation;
   if (host.enableActorWatermark && typeof (listEnhancement as any).enableActorWatermark === 'boolean') host.enableActorWatermark.checked = (listEnhancement as any).enableActorWatermark;
   if (host.actorWatermarkPosition && (listEnhancement as any).actorWatermarkPosition) host.actorWatermarkPosition.value = (listEnhancement as any).actorWatermarkPosition;
   if (host.actorWatermarkOpacity && typeof (listEnhancement as any).actorWatermarkOpacity === 'number') host.actorWatermarkOpacity.value = String((listEnhancement as any).actorWatermarkOpacity);

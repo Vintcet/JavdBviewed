@@ -19,6 +19,8 @@ type EnhancementSaveHost = {
   listColumnCount?: HTMLInputElement;
   listContainerWidth?: HTMLInputElement;
   enableContainerExpansion?: HTMLInputElement;
+  enableFullTitle?: HTMLInputElement;
+  enableTitleTranslation?: HTMLInputElement;
   showStatusBadge?: HTMLInputElement;
   enableStatusQuickAction?: HTMLInputElement;
   enablePopularityEffects?: HTMLInputElement;
@@ -77,6 +79,8 @@ export function mergeEnhancementSettingsForSave(
       enableVideoPreviewDetail: host.enableVideoPreviewDetail?.checked ?? (existingListEnhancement as any).enableVideoPreviewDetail,
       enableScrollPaging: host.enableScrollPaging?.checked ?? existingListEnhancement.enableScrollPaging,
       enableListOptimization: true,
+      enableFullTitle: host.enableFullTitle?.checked ?? (existingListEnhancement as any).enableFullTitle ?? true,
+      enableTitleTranslation: host.enableTitleTranslation?.checked ?? (existingListEnhancement as any).enableTitleTranslation ?? false,
       previewDelay: parseNumber(host.previewDelay?.value, existingListEnhancement.previewDelay ?? 1000),
       previewVolume: parseNumber(host.previewVolume?.value, existingListEnhancement.previewVolume ?? 0.2),
       enableRightClickBackground: true,

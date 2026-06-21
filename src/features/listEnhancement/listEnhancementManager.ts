@@ -39,6 +39,10 @@ import {
   parseRatingStatsText,
 } from './application/popularityEffects';
 import {
+  clearListItemTitleTranslation,
+  translateListItemTitle,
+} from './application/titleTranslation';
+import {
   buildPopularityStyles,
   LIST_ENHANCEMENT_BASE_STYLES,
 } from './ui/styles';
@@ -182,6 +186,14 @@ class ListEnhancementManager {
     if (popularityChanged) {
       this.ensurePopularityStyles();
       this.reapplyPopularityEffects();
+    }
+
+    const titlePresentationChanged = (
+      oldConfig.enableFullTitle !== this.config.enableFullTitle ||
+      oldConfig.enableTitleTranslation !== this.config.enableTitleTranslation
+    );
+    if (titlePresentationChanged) {
+      this.reapplyTitleEnhancementsForAll();
     }
   }
 
@@ -430,6 +442,12 @@ class ListEnhancementManager {
       this.optimizeListItem(item, videoInfo);
     }
 
+    if (this.config.enableTitleTranslation) {
+      translateListItemTitle(item, videoInfo).catch(err => log('List title translation error:', err));
+    } else {
+      clearListItemTitleTranslation(item);
+    }
+
     // 演员水印
     if (this.config.enableActorWatermark) {
       this.applyActorWatermark(item, videoInfo).catch(err => log('Actor watermark error:', err));
@@ -504,7 +522,31 @@ class ListEnhancementManager {
   }
 
   private optimizeListItem(item: HTMLElement, videoInfo: { code: string; title: string; url: string }): void {
-    optimizeListItemTitle(item, videoInfo);
+    optimizeListItemTitle(item, videoInfo, {
+      showFullTitle: this.config.enableFullTitle !== false,
+    });
+  }
+
+  private reapplyTitleEnhancementsForAll(): void {
+    try {
+      const items = document.querySelectorAll('.movie-list .item');
+      items.forEach(el => {
+        const item = el as HTMLElement;
+        const info = extractListItemVideoInfo(item);
+        if (!info) return;
+        if (this.config.enableListOptimization) {
+          this.optimizeListItem(item, info);
+        }
+        if (this.config.enableTitleTranslation) {
+          item.removeAttribute('data-title-translation-state');
+          translateListItemTitle(item, info).catch(err => log('List title translation error:', err));
+        } else {
+          clearListItemTitleTranslation(item);
+        }
+      });
+    } catch (error) {
+      log('Failed to reapply list title enhancements:', error);
+    }
   }
 
   private initScrollPaging(): void {

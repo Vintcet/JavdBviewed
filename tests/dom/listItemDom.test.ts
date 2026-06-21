@@ -54,6 +54,19 @@ describe('list item DOM helpers', () => {
     expect(buttons[0].getAttribute('data-code')).toBe('ABC-001');
     expect(buttons[0].getAttribute('data-title')).toBe('Sample Title');
     expect(titleElement.classList.contains('x-title')).toBe(true);
+    expect(titleElement.classList.contains('x-title-full')).toBe(true);
+    expect(titleElement.classList.contains('x-ellipsis')).toBe(false);
+  });
+
+  it('keeps the old single-line title mode when full title display is disabled', () => {
+    const item = createMovieItem();
+    const videoInfo = extractListItemVideoInfo(item);
+    expect(videoInfo).not.toBeNull();
+
+    optimizeListItemTitle(item, videoInfo!, { showFullTitle: false });
+
+    const titleElement = item.querySelector('div.video-title') as HTMLElement;
+    expect(titleElement.classList.contains('x-title-full')).toBe(false);
     expect(titleElement.classList.contains('x-ellipsis')).toBe(true);
   });
 });

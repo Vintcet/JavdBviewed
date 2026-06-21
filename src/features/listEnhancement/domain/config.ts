@@ -22,6 +22,8 @@ export interface ListEnhancementConfig {
   enableVideoPreviewList?: boolean;
   enableVideoPreviewDetail?: boolean;
   enableListOptimization: boolean;
+  enableFullTitle?: boolean;
+  enableTitleTranslation?: boolean;
   enableScrollPaging: boolean;
   enableHighQualityCover: boolean;
   previewDelay: number;
@@ -63,6 +65,8 @@ export function createDefaultListEnhancementConfig(): ListEnhancementConfig {
     enableVideoPreviewList: true,
     enableVideoPreviewDetail: true,
     enableListOptimization: true,
+    enableFullTitle: true,
+    enableTitleTranslation: false,
     enableScrollPaging: false,
     enableHighQualityCover: true,
     previewDelay: 1000,

@@ -559,6 +559,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
         enableVideoPreview: true,
         enableScrollPaging: false, // 默认关闭滚动翻页
         enableListOptimization: true,
+        enableFullTitle: true,
+        enableTitleTranslation: false,
         previewDelay: 1000,
         previewVolume: 0.2,
         enableRightClickBackground: true,

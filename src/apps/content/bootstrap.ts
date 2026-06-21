@@ -516,6 +516,8 @@ async function initialize(): Promise<void> {
             enableClickEnhancementDetail: (settings.listEnhancement as any)?.enableClickEnhancementDetail !== false,
             enableVideoPreview: settings.listEnhancement?.enableVideoPreview !== false,
             enableListOptimization: settings.listEnhancement?.enableListOptimization !== false,
+            enableFullTitle: (settings.listEnhancement as any)?.enableFullTitle !== false,
+            enableTitleTranslation: (settings.listEnhancement as any)?.enableTitleTranslation === true,
             enableScrollPaging: settings.listEnhancement?.enableScrollPaging === true,
             previewDelay: settings.listEnhancement?.previewDelay || 1000,
             previewVolume: settings.listEnhancement?.previewVolume ?? 0.2,
