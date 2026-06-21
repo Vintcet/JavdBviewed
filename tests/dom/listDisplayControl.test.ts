@@ -95,18 +95,19 @@ describe('list display control UI helpers', () => {
     expect(container.getAttribute('data-x-cols-override')).toBe('true');
   });
 
-  it('moves the existing search bar into navbar and can restore it', () => {
+  it('adds a JHS-style nav search box and restores the original search bar', () => {
     document.body.innerHTML = `
       <nav class="navbar"><div class="navbar-menu"><div class="navbar-end"></div></div></nav>
       <section><div id="search-origin"><div id="search-bar-container"><form></form></div></div></section>
     `;
 
     expect(mountSearchBarIntoNavbar(document)).toBe(true);
-    expect(document.querySelector('#x-nav-search-host #search-bar-container')).not.toBeNull();
-    expect(document.querySelector('#search-origin #search-bar-container')).toBeNull();
+    expect(document.querySelector('#x-nav-search-box #x-nav-search-keyword')).not.toBeNull();
+    expect(document.querySelector<HTMLElement>('#search-origin #search-bar-container')?.style.display).toBe('none');
 
     restoreSearchBarPlacement(document);
     expect(document.querySelector('#search-origin #search-bar-container')).not.toBeNull();
-    expect(document.getElementById('x-nav-search-host')).toBeNull();
+    expect(document.querySelector<HTMLElement>('#search-origin #search-bar-container')?.style.display).toBe('');
+    expect(document.getElementById('x-nav-search-box')).toBeNull();
   });
 });

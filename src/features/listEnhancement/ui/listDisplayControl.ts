@@ -17,8 +17,7 @@ export interface ApplyListDisplayControlResult {
 }
 
 const STYLE_ID = 'x-list-display-control';
-const NAV_SEARCH_HOST_ID = 'x-nav-search-host';
-const NAV_SEARCH_PLACEHOLDER_ID = 'x-nav-search-placeholder';
+const NAV_SEARCH_BOX_ID = 'x-nav-search-box';
 const ALLOWED_DOMAINS = ['javdb.com', 'javdb570.com'];
 
 export function applyListDisplayControl(options: ApplyListDisplayControlOptions): ApplyListDisplayControlResult {
@@ -114,48 +113,39 @@ export function removeListDisplayControlStyle(documentRef: Document): void {
 }
 
 export function mountSearchBarIntoNavbar(documentRef: Document): boolean {
-  const searchBar = findSearchBar(documentRef);
   const navTarget = findNavbarTarget(documentRef);
-  if (!searchBar || !navTarget) return false;
+  if (!navTarget) return false;
 
-  let host = documentRef.getElementById(NAV_SEARCH_HOST_ID) as HTMLElement | null;
-  if (!host) {
-    host = documentRef.createElement('div');
-    host.id = NAV_SEARCH_HOST_ID;
-    host.className = 'navbar-item x-nav-search-host';
+  const searchBar = findSearchBar(documentRef);
+  if (searchBar) {
+    if (!searchBar.hasAttribute('data-x-prev-display')) {
+      searchBar.setAttribute('data-x-prev-display', searchBar.style.display || '');
+    }
+    searchBar.setAttribute('data-x-original-search-hidden', 'true');
+    searchBar.style.display = 'none';
   }
 
-  if (!documentRef.getElementById(NAV_SEARCH_PLACEHOLDER_ID)) {
-    const placeholder = documentRef.createElement('span');
-    placeholder.id = NAV_SEARCH_PLACEHOLDER_ID;
-    placeholder.hidden = true;
-    searchBar.parentElement?.insertBefore(placeholder, searchBar);
+  let box = documentRef.getElementById(NAV_SEARCH_BOX_ID) as HTMLElement | null;
+  if (!box) {
+    box = createNavSearchBox(documentRef);
   }
 
-  if (host.parentElement !== navTarget) {
-    navTarget.appendChild(host);
+  if (box.parentElement !== navTarget.parentElement) {
+    navTarget.insertAdjacentElement('afterend', box);
   }
 
-  if (searchBar.parentElement !== host) {
-    host.appendChild(searchBar);
-  }
-
-  searchBar.setAttribute('data-x-nav-search', 'true');
   return true;
 }
 
 export function restoreSearchBarPlacement(documentRef: Document): void {
-  const host = documentRef.getElementById(NAV_SEARCH_HOST_ID);
-  const placeholder = documentRef.getElementById(NAV_SEARCH_PLACEHOLDER_ID);
-  const searchBar = host?.querySelector<HTMLElement>('#search-bar-container, #search-bar-wrap');
-
-  if (placeholder && searchBar) {
-    placeholder.parentElement?.insertBefore(searchBar, placeholder);
-    searchBar.removeAttribute('data-x-nav-search');
+  const searchBar = findSearchBar(documentRef);
+  if (searchBar?.getAttribute('data-x-original-search-hidden') === 'true') {
+    searchBar.style.display = searchBar.getAttribute('data-x-prev-display') || '';
+    searchBar.removeAttribute('data-x-prev-display');
+    searchBar.removeAttribute('data-x-original-search-hidden');
   }
 
-  placeholder?.remove();
-  host?.remove();
+  documentRef.getElementById(NAV_SEARCH_BOX_ID)?.remove();
 }
 
 export function isListDisplayControlAllowedHost(hostname: string): boolean {
@@ -174,6 +164,54 @@ function findSearchBar(documentRef: Document): HTMLElement | null {
 
 function findNavbarTarget(documentRef: Document): HTMLElement | null {
   return documentRef.querySelector<HTMLElement>(
-    '.navbar .navbar-end, #navbar-menu-user .navbar-end, .navbar .navbar-menu, #navbar-menu, .navbar-menu'
+    '#navbar-menu-hero, .navbar .navbar-menu:first-of-type, #navbar-menu, .navbar-menu'
   );
+}
+
+function createNavSearchBox(documentRef: Document): HTMLElement {
+  const box = documentRef.createElement('div');
+  box.id = NAV_SEARCH_BOX_ID;
+  box.className = 'navbar-menu x-nav-search-box';
+  box.innerHTML = `
+    <div class="navbar-start x-nav-search-inner">
+      <select id="x-nav-search-type" aria-label="搜索类型">
+        <option value="all">影片</option>
+        <option value="actor">演员</option>
+        <option value="series">系列</option>
+        <option value="maker">片商</option>
+        <option value="director">导演</option>
+        <option value="code">番号</option>
+        <option value="list">清单</option>
+      </select>
+      <input id="x-nav-search-keyword" type="text" placeholder="输入影片番号、演员名等关键词进行检索" autocomplete="off">
+      <a id="x-nav-advanced-search" href="/advanced_search?noFold=1" title="高级检索">...</a>
+      <button id="x-nav-image-search" type="button">识图</button>
+      <button id="x-nav-search-submit" type="button">搜索</button>
+    </div>
+  `;
+
+  const keyword = box.querySelector<HTMLInputElement>('#x-nav-search-keyword');
+  const type = box.querySelector<HTMLSelectElement>('#x-nav-search-type');
+  const submit = box.querySelector<HTMLButtonElement>('#x-nav-search-submit');
+  const image = box.querySelector<HTMLButtonElement>('#x-nav-image-search');
+  const runSearch = () => {
+    const q = String(keyword?.value || '').trim();
+    if (!q) return;
+    const f = String(type?.value || 'all');
+    documentRef.defaultView?.location.assign(`/search?q=${encodeURIComponent(q)}&f=${encodeURIComponent(f)}`);
+  };
+
+  submit?.addEventListener('click', runSearch);
+  keyword?.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      runSearch();
+    }
+  });
+  image?.addEventListener('click', () => {
+    const originTrigger = documentRef.querySelector<HTMLElement>('#button-search-image, .search-image, [data-action*="image"], input[type="file"][accept*="image"]');
+    originTrigger?.click();
+  });
+
+  return box;
 }

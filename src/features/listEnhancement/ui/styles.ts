@@ -235,75 +235,70 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
 
   if (enableSearchBarLayout) {
     styleContent += `
-        /* JHS 风格搜索栏：复用原站控件，收进顶部导航右侧 */
-        body .navbar #x-nav-search-host {
+        /* JHS 风格搜索栏：在顶部导航中使用紧凑深色搜索盒 */
+        body #x-nav-search-box {
           display: flex !important;
           align-items: center !important;
-          justify-content: flex-end !important;
-          flex: 1 1 520px !important;
-          min-width: 360px !important;
+          flex: 1 1 auto !important;
+          min-width: 520px !important;
           max-width: 560px !important;
-          padding: 4px 0 4px 12px !important;
-          margin-left: auto !important;
-          box-sizing: border-box !important;
-          background: transparent !important;
-        }
-
-        body .navbar #x-nav-search-host #search-bar-container,
-        body .navbar #x-nav-search-host #search-bar-wrap {
-          display: block !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          min-width: 0 !important;
-          margin: 0 !important;
-          padding: 0 !important;
+          padding: 0 8px !important;
+          margin-left: 8px !important;
           background: transparent !important;
           box-shadow: none !important;
-          border-radius: 0 !important;
         }
 
-        body .navbar #x-nav-search-host form,
-        body .navbar #x-nav-search-host .field,
-        body .navbar #x-nav-search-host .field.has-addons,
-        body .navbar #x-nav-search-host .control {
+        body #x-nav-search-box .x-nav-search-inner {
           display: flex !important;
           align-items: center !important;
-          flex-wrap: nowrap !important;
-          gap: 6px !important;
-          margin-bottom: 0 !important;
+          gap: 5px !important;
+          width: 100% !important;
+          min-width: 0 !important;
         }
 
-        body .navbar #x-nav-search-host .control {
-          flex: 0 0 auto !important;
-        }
-
-        body .navbar #x-nav-search-host .control:has(input.input),
-        body .navbar #x-nav-search-host .control.search-input,
-        body .navbar #x-nav-search-host .field > .control:nth-child(2) {
-          flex: 1 1 230px !important;
-          min-width: 160px !important;
-        }
-
-        body .navbar #x-nav-search-host input.input,
-        body .navbar #x-nav-search-host .input,
-        body .navbar #x-nav-search-host select,
-        body .navbar #x-nav-search-host .select select {
-          height: 38px !important;
-          min-height: 38px !important;
+        body #x-nav-search-box select,
+        body #x-nav-search-box input,
+        body #x-nav-search-box a,
+        body #x-nav-search-box button {
+          height: 36px !important;
+          min-height: 36px !important;
+          padding: 0 12px !important;
+          border: 1px solid #555 !important;
           border-radius: 4px !important;
+          background: #333 !important;
+          color: #eee !important;
           box-shadow: none !important;
           font-size: 14px !important;
+          line-height: 34px !important;
+          outline: none !important;
         }
 
-        body .navbar #x-nav-search-host .button {
-          height: 38px !important;
-          min-height: 38px !important;
-          border-radius: 4px !important;
-          padding-left: 14px !important;
-          padding-right: 14px !important;
+        body #x-nav-search-box input {
+          flex: 1 1 240px !important;
+          min-width: 180px !important;
+        }
+
+        body #x-nav-search-box a,
+        body #x-nav-search-box button {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          background: #444 !important;
+          color: #fff !important;
+          text-decoration: none !important;
+          font-weight: 500 !important;
+          cursor: pointer !important;
           white-space: nowrap !important;
         }
 
+        body #x-nav-search-box a:hover,
+        body #x-nav-search-box button:hover {
+          background: #555 !important;
+          border-color: #666 !important;
+        }
+
+        body #search-bar-container[data-x-original-search-hidden="true"],
+        body #search-bar-wrap[data-x-original-search-hidden="true"],
         body .search-recent-keywords {
           display: none !important;
         }
@@ -320,13 +315,21 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
         }
 
-        @media (max-width: 900px) {
-          body .navbar #x-nav-search-host {
+        @media (max-width: 1280px) {
+          body #x-nav-search-box {
+            min-width: 360px !important;
+            max-width: 440px !important;
+          }
+        }
+
+        @media (max-width: 1023px) {
+          body #x-nav-search-box {
             flex-basis: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
             width: 100% !important;
             padding: 6px 10px !important;
+            margin-left: 0 !important;
           }
         }
       `;
