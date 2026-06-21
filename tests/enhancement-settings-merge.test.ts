@@ -139,6 +139,19 @@ describe('mergeEnhancementSettingsForSave', () => {
 
     expect(current.videoEnhancement?.enableReviewEnhancement).toBe(true);
     expect(current.videoEnhancement?.enableReviewBreaker).toBe(true);
+    expect(current.videoEnhancement?.enableDrive115Match).toBe(true);
+  });
+
+  it('persists the detail 115 match toggle with a default on value', () => {
+    const current = structuredClone(DEFAULT_SETTINGS);
+
+    const defaultMerged = mergeEnhancementSettingsForSave(current, {} as any);
+    const disabledMerged = mergeEnhancementSettingsForSave(current, {
+      veEnableDrive115Match: { checked: false },
+    } as any);
+
+    expect(defaultMerged.videoEnhancement?.enableDrive115Match).toBe(true);
+    expect(disabledMerged.videoEnhancement?.enableDrive115Match).toBe(false);
   });
 
   it('keeps magnet quality filtering on by default', () => {

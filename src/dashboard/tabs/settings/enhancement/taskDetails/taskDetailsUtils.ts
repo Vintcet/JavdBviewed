@@ -256,6 +256,7 @@ export function buildTaskDetailPageSummaries(tasks: any[], deps: {
     'videoEnhancement:runTitle',
     'videoEnhancement:runFC2Breaker',
     'videoEnhancement:runReviewBreaker',
+    'videoEnhancement:runDrive115Match',
     'videoEnhancement:runRelatedLists',
     'videoEnhancement:finish',
     'actorRemarks:run',

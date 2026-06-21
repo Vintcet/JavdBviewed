@@ -531,6 +531,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
         // 新增：影片页收藏与评分
         enableVideoFavoriteRating: true, // 默认启用
         enableRelatedLists: true,
+        enableDrive115Match: true,
         enableExternalEntryPanel: true,
         enableExternalSearch: true,
         enableOnlineAvailability: true,

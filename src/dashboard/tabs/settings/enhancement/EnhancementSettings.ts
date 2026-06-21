@@ -67,6 +67,7 @@ export class EnhancementSettings extends BaseSettingsPanel {
     private veEnableActorRemarks!: HTMLInputElement;
     private veEnableActorNameMarks!: HTMLInputElement;
     private veEnableRelatedLists!: HTMLInputElement;
+    private veEnableDrive115Match!: HTMLInputElement;
     private veEnableExternalEntryPanel!: HTMLInputElement;
     private veEnableExternalSearch!: HTMLInputElement;
     private veEnableOnlineAvailability!: HTMLInputElement;
@@ -786,6 +787,7 @@ export class EnhancementSettings extends BaseSettingsPanel {
                     enableActorRemarks: this.veEnableActorRemarks?.checked === true,
                     enableActorNameMarks: this.veEnableActorNameMarks?.checked !== false,
                     enableRelatedLists: this.veEnableRelatedLists?.checked !== false,
+                    enableDrive115Match: this.veEnableDrive115Match?.checked !== false,
                     enableExternalEntryPanel: this.veEnableExternalEntryPanel?.checked !== false,
                     enableExternalSearch: this.veEnableExternalSearch?.checked !== false,
                     enableOnlineAvailability: this.veEnableOnlineAvailability?.checked !== false,

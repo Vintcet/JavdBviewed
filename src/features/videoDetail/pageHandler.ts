@@ -427,6 +427,10 @@ export function getVideoDetailTaskBlueprints(settings: any): VideoDetailTaskBlue
         blueprints.push({ phase: 'idle', label: 'videoEnhancement:runReviewBreaker', dependsOn: ['videoStatus:initialSync'] });
     }
 
+    if ((settings as any)?.videoEnhancement?.enableDrive115Match !== false) {
+        blueprints.push({ phase: 'idle', label: 'videoEnhancement:runDrive115Match', dependsOn: ['videoStatus:initialSync'] });
+    }
+
     if (enableRelatedLists) {
         blueprints.push({ phase: 'idle', label: 'videoEnhancement:runRelatedLists', dependsOn: ['videoEnhancement:initCore'] });
     }
@@ -666,6 +670,7 @@ export async function handleVideoDetailPage(): Promise<void> {
                 enableActorNameMarks: (STATE.settings as any)?.videoEnhancement?.enableActorNameMarks !== false,
                 enableActorRemarks: (STATE.settings as any)?.videoEnhancement?.enableActorRemarks === true,
                 enableReviewBreaker: (STATE.settings as any)?.videoEnhancement?.enableReviewBreaker !== false,
+                enableDrive115Match: (STATE.settings as any)?.videoEnhancement?.enableDrive115Match !== false,
                 enableRelatedLists: (STATE.settings as any)?.videoEnhancement?.enabled === true
                     && (STATE.settings as any)?.videoEnhancement?.enableRelatedLists !== false,
                 enableVideoFavoriteRating: (STATE.settings as any)?.videoEnhancement?.enableVideoFavoriteRating === true,
@@ -739,6 +744,17 @@ export async function handleVideoDetailPage(): Promise<void> {
                     await videoDetailEnhancer.runReviewBreaker();
                 }, {
                     label: 'videoEnhancement:runReviewBreaker',
+                    idle: true,
+                    idleTimeout: 5000,
+                    dependsOn: ['videoStatus:initialSync'],
+                });
+            }
+
+            if ((STATE.settings as any)?.videoEnhancement?.enableDrive115Match !== false) {
+                initOrchestrator.add('idle', async () => {
+                    await videoDetailEnhancer.runDrive115Match();
+                }, {
+                    label: 'videoEnhancement:runDrive115Match',
                     idle: true,
                     idleTimeout: 5000,
                     dependsOn: ['videoStatus:initialSync'],

@@ -31,6 +31,7 @@ type EnhancementSaveHost = {
   popularityMinRating?: HTMLInputElement;
   popularityMinRatingCount?: HTMLInputElement;
   veEnableRelatedLists?: HTMLInputElement;
+  veEnableDrive115Match?: HTMLInputElement;
   veEnableExternalEntryPanel?: HTMLInputElement;
   veEnableExternalSearch?: HTMLInputElement;
   veEnableOnlineAvailability?: HTMLInputElement;
@@ -65,6 +66,7 @@ export function mergeEnhancementSettingsForSave(
     videoEnhancement: {
       ...existingVideoEnhancement,
       enableRelatedLists: host.veEnableRelatedLists?.checked ?? existingVideoEnhancement.enableRelatedLists ?? true,
+      enableDrive115Match: host.veEnableDrive115Match?.checked ?? existingVideoEnhancement.enableDrive115Match ?? true,
       enableExternalEntryPanel: host.veEnableExternalEntryPanel?.checked ?? existingVideoEnhancement.enableExternalEntryPanel ?? true,
       enableExternalSearch: host.veEnableExternalSearch?.checked ?? existingVideoEnhancement.enableExternalSearch ?? true,
       enableOnlineAvailability: host.veEnableOnlineAvailability?.checked ?? existingVideoEnhancement.enableOnlineAvailability ?? true,

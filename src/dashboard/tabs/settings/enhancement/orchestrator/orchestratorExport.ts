@@ -93,6 +93,7 @@ export function getTaskDisplayNameForExport(label: string): string {
     'videoEnhancement:runCover': '视频增强-封面处理 (videoEnhancement:runCover)',
     'videoEnhancement:runTitle': '视频增强-标题处理 (videoEnhancement:runTitle)',
     'videoEnhancement:runReviewBreaker': '视频增强-评论破解 (videoEnhancement:runReviewBreaker)',
+    'videoEnhancement:runDrive115Match': '视频增强-115资源匹配 (videoEnhancement:runDrive115Match)',
     'videoEnhancement:runRelatedLists': '视频增强-相关清单解锁 (videoEnhancement:runRelatedLists)',
     'videoEnhancement:runFC2Breaker': '视频增强-FC2破解 (videoEnhancement:runFC2Breaker)',
     'videoEnhancement:finish': '视频增强-完成 (videoEnhancement:finish)',

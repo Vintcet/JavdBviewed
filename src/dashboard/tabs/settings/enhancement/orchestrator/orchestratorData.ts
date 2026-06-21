@@ -83,6 +83,7 @@ export function getTaskDescription(label: string): string {
     'videoEnhancement:runCover': '影片页封面增强',
     'videoEnhancement:runTitle': '影片页标题翻译',
     'videoEnhancement:runReviewBreaker': '评论区破解',
+    'videoEnhancement:runDrive115Match': '115资源匹配',
     'videoEnhancement:runRelatedLists': '相关清单解锁',
     'videoEnhancement:runFC2Breaker': 'FC2拦截破解',
     'videoEnhancement:finish': '影片页增强完成',

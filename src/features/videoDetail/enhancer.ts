@@ -13,7 +13,8 @@ import { saveSubtaskDetail, yieldToMainThread } from '../../platform/tasks';
 import { initOrchestrator } from '../../apps/content/orchestrator';
 import { showEnhancementDone } from '../../platform/browser/enhancementLoadingIndicator';
 import { getJavdbTheme, isDarkTheme, type JavdbTheme } from '../../platform/browser/domUtils';
-import { addTaskUrlsV2 } from '../drive115/router';
+import { addTaskUrlsV2, isDrive115Enabled, searchFiles as searchDrive115Files } from '../drive115/router';
+import type { Drive115File } from '../drive115/app/types';
 import {
   activatePreviewVideoPreload,
   releasePreviewVideoMedia,
@@ -37,6 +38,7 @@ const DETAIL_TITLE_ORIGINAL_ATTR = 'data-jdb-original-title';
 const DETAIL_TITLE_TRANSLATED_ATTR = 'data-jdb-translated-title';
 const DETAIL_TITLE_MODE_ATTR = 'data-jdb-title-translation-mode';
 const TITLE_TRANSLATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const DRIVE115_MATCH_PANEL_ID = 'jdb-drive115-match-panel';
 
 const detailTitleTranslator = new TranslatorService({
   ...DEFAULT_TRANSLATOR_CONFIG,
@@ -94,6 +96,7 @@ export interface EnhancementOptions {
   enableReviewMagnetLinkify: boolean;
   enableReviewPush115: boolean;
   enableRelatedLists: boolean;
+  enableDrive115Match: boolean;
   enableVideoPreview: boolean; // 🆕 视频预览功能
 }
 
@@ -120,6 +123,7 @@ export class VideoDetailEnhancer {
       enableReviewMagnetLinkify: true,
       enableReviewPush115: true,
       enableRelatedLists: true,
+      enableDrive115Match: true,
       enableVideoPreview: true, // 🆕 默认启用视频预览
       ...options,
     };
@@ -150,6 +154,7 @@ export class VideoDetailEnhancer {
       this.options.enableReviewMagnetLinkify = cfg.enableReviewMagnetLinkify !== false;
       this.options.enableReviewPush115 = cfg.enableReviewPush115 !== false;
       this.options.enableRelatedLists = (cfg as any).enableRelatedLists !== false;
+      this.options.enableDrive115Match = (cfg as any).enableDrive115Match !== false;
       // 🆕 从列表增强配置中读取视频预览设置（详情页专用）
       const listCfg = STATE.settings?.listEnhancement;
       this.options.enableVideoPreview = listCfg?.enableVideoPreview !== false && listCfg?.enableVideoPreviewDetail !== false;
@@ -1420,6 +1425,312 @@ export class VideoDetailEnhancer {
       .replace(/'/g, '&#39;');
   }
 
+  private async ensureDrive115MatchPanel(): Promise<HTMLElement | null> {
+    const magnetsContent = await this.waitForElement('#magnets-content', 6000, 200) as HTMLElement | null;
+    if (!magnetsContent) return null;
+
+    const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
+    const insertAfter = magnetPanel || magnetsContent;
+    let panel = document.getElementById(DRIVE115_MATCH_PANEL_ID) as HTMLElement | null;
+
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = DRIVE115_MATCH_PANEL_ID;
+      panel.className = 'message video-panel jdb-drive115-match-panel';
+      panel.innerHTML = `
+        <div class="message-body">
+          <div class="jdb-drive115-match-header">
+            <div class="jdb-drive115-match-title">115匹配</div>
+            <button type="button" class="jdb-drive115-match-refresh">刷新</button>
+          </div>
+          <div class="jdb-drive115-match-content"></div>
+        </div>
+      `;
+      const refresh = panel.querySelector<HTMLButtonElement>('.jdb-drive115-match-refresh');
+      refresh?.addEventListener('click', async () => {
+        panel?.removeAttribute('data-jdb-drive115-loaded');
+        await this.runDrive115Match();
+      });
+    }
+
+    panel.classList.remove('is-hidden');
+    panel.removeAttribute('hidden');
+    panel.style.display = 'block';
+
+    if (insertAfter.parentElement && panel.previousElementSibling !== insertAfter) {
+      insertAfter.insertAdjacentElement('afterend', panel);
+    }
+
+    return panel;
+  }
+
+  private getDrive115MatchContent(panel: HTMLElement): HTMLElement {
+    let content = panel.querySelector<HTMLElement>('.jdb-drive115-match-content');
+    if (!content) {
+      content = document.createElement('div');
+      content.className = 'jdb-drive115-match-content';
+      panel.appendChild(content);
+    }
+    return content;
+  }
+
+  private renderDrive115MatchLoading(panel: HTMLElement): void {
+    this.getDrive115MatchContent(panel).innerHTML = `
+      <div class="jdb-drive115-match-status">
+        <span class="jdb-drive115-match-spinner"></span>
+        <span>正在匹配 115 资源...</span>
+      </div>
+    `;
+  }
+
+  private renderDrive115MatchStatus(panel: HTMLElement, message: string, retryable = false): void {
+    const content = this.getDrive115MatchContent(panel);
+    content.innerHTML = `
+      <div class="jdb-drive115-match-status${retryable ? ' is-error' : ''}">
+        <span>${this.escapeHtml(message)}</span>
+        ${retryable ? '<button type="button" class="jdb-drive115-match-inline-retry">重试</button>' : ''}
+      </div>
+    `;
+    const retry = content.querySelector<HTMLButtonElement>('.jdb-drive115-match-inline-retry');
+    retry?.addEventListener('click', async () => {
+      panel.removeAttribute('data-jdb-drive115-loaded');
+      await this.runDrive115Match();
+    });
+  }
+
+  private normalizeDrive115MatchCode(value: string): string {
+    return String(value || '').trim().toUpperCase().replace(/[_\s]+/g, '-');
+  }
+
+  private filterDrive115MatchResults(files: Drive115File[], videoId: string): Drive115File[] {
+    const code = this.normalizeDrive115MatchCode(videoId);
+    const matched = (Array.isArray(files) ? files : [])
+      .filter(file => {
+        const name = this.normalizeDrive115MatchCode(file.name || '');
+        if (!code || !name.includes(code)) return false;
+        return /\.(mp4|mkv|avi|mov|wmv|flv|ts|m4v|iso)$/i.test(file.name || '') || !(file.name || '').includes('.');
+      })
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+    return matched.length > 0 ? matched : (Array.isArray(files) ? files : []).slice(0, 10);
+  }
+
+  private formatDrive115FileSize(bytes: number): string {
+    const value = Number(bytes || 0);
+    if (!Number.isFinite(value) || value <= 0) return '-';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let size = value;
+    let index = 0;
+    while (size >= 1024 && index < units.length - 1) {
+      size /= 1024;
+      index += 1;
+    }
+    return `${size >= 10 || index === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[index]}`;
+  }
+
+  private formatDrive115Time(timestamp: number): string {
+    const seconds = Number(timestamp || 0);
+    if (!Number.isFinite(seconds) || seconds <= 0) return '-';
+    const date = new Date(seconds * 1000);
+    if (Number.isNaN(date.getTime())) return '-';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private renderDrive115MatchResults(panel: HTMLElement, files: Drive115File[]): void {
+    if (!files.length) {
+      this.renderDrive115MatchStatus(panel, '未匹配到 115 资源');
+      return;
+    }
+
+    const rows = files.slice(0, 12).map(file => {
+      const playUrl = file.pickCode
+        ? `https://115vod.com/?pickcode=${encodeURIComponent(file.pickCode)}&share_id=0`
+        : '';
+      return `
+        <tr>
+          <td class="jdb-drive115-match-name" title="${this.escapeHtml(file.name)}">${this.escapeHtml(file.name || '-')}</td>
+          <td>${this.escapeHtml(this.formatDrive115FileSize(file.size))}</td>
+          <td>${this.escapeHtml(this.formatDrive115Time(file.updatedAt))}</td>
+          <td>
+            ${playUrl
+              ? `<a class="jdb-drive115-match-play" href="${playUrl}" target="_blank" rel="noopener noreferrer">播放</a>`
+              : '<span class="jdb-drive115-match-muted">-</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    this.getDrive115MatchContent(panel).innerHTML = `
+      <div class="jdb-drive115-match-table-wrap">
+        <table class="jdb-drive115-match-table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>大小</th>
+              <th>时间</th>
+              <th>播放</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  private injectDrive115MatchStyles(): void {
+    const styleId = 'jdb-drive115-match-styles';
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      #${DRIVE115_MATCH_PANEL_ID} {
+        --jdb-115-bg: #f8fafc;
+        --jdb-115-card: #ffffff;
+        --jdb-115-border: rgba(15, 23, 42, 0.12);
+        --jdb-115-text: #1f2937;
+        --jdb-115-muted: #64748b;
+        --jdb-115-accent: #0f766e;
+        --jdb-115-accent-bg: #ccfbf1;
+        margin-top: 16px !important;
+        margin-bottom: 0 !important;
+        background: transparent !important;
+      }
+
+      html[data-theme="dark"] #${DRIVE115_MATCH_PANEL_ID} {
+        --jdb-115-bg: #111827;
+        --jdb-115-card: #1f2937;
+        --jdb-115-border: rgba(148, 163, 184, 0.22);
+        --jdb-115-text: #e5e7eb;
+        --jdb-115-muted: #9ca3af;
+        --jdb-115-accent: #5eead4;
+        --jdb-115-accent-bg: rgba(20, 184, 166, 0.18);
+      }
+
+      #${DRIVE115_MATCH_PANEL_ID} .message-body {
+        padding: 10px !important;
+        border-radius: 12px;
+        background: var(--jdb-115-bg);
+      }
+
+      .jdb-drive115-match-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .jdb-drive115-match-title {
+        color: var(--jdb-115-text);
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .jdb-drive115-match-refresh,
+      .jdb-drive115-match-inline-retry {
+        height: 26px;
+        padding: 0 10px;
+        border: 0;
+        border-radius: 8px;
+        color: var(--jdb-115-accent);
+        background: var(--jdb-115-accent-bg);
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .jdb-drive115-match-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        border: 1px solid var(--jdb-115-border);
+        border-radius: 10px;
+        color: var(--jdb-115-muted);
+        background: var(--jdb-115-card);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .jdb-drive115-match-status.is-error {
+        color: #b91c1c;
+      }
+
+      .jdb-drive115-match-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(100, 116, 139, 0.28);
+        border-top-color: var(--jdb-115-accent);
+        border-radius: 999px;
+        animation: jdb-drive115-spin 0.8s linear infinite;
+      }
+
+      .jdb-drive115-match-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--jdb-115-border);
+        border-radius: 10px;
+        background: var(--jdb-115-card);
+      }
+
+      .jdb-drive115-match-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--jdb-115-text);
+        font-size: 13px;
+      }
+
+      .jdb-drive115-match-table th,
+      .jdb-drive115-match-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--jdb-115-border);
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .jdb-drive115-match-table th {
+        color: var(--jdb-115-muted);
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .jdb-drive115-match-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .jdb-drive115-match-name {
+        max-width: 520px;
+        word-break: break-all;
+      }
+
+      .jdb-drive115-match-play {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 24px;
+        padding: 2px 9px;
+        border-radius: 8px;
+        color: var(--jdb-115-accent) !important;
+        background: var(--jdb-115-accent-bg);
+        font-weight: 800;
+      }
+
+      .jdb-drive115-match-muted {
+        color: var(--jdb-115-muted);
+      }
+
+      @keyframes jdb-drive115-spin {
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   /**
    * 创建早期加载提示（在点击标签时立即显示）
    */
@@ -1504,7 +1815,8 @@ export class VideoDetailEnhancer {
     if (!magnetsContent) return null;
 
     const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
-    const insertAfter = magnetPanel || magnetsContent;
+    const drive115MatchPanel = document.getElementById(DRIVE115_MATCH_PANEL_ID) as HTMLElement | null;
+    const insertAfter = drive115MatchPanel || magnetPanel || magnetsContent;
     let reviewsRoot = document.querySelector('div[data-movie-tab-target="reviews"], #reviews') as HTMLElement | null;
 
     if (!reviewsRoot) {
@@ -1532,6 +1844,40 @@ export class VideoDetailEnhancer {
     }
 
     return reviewsRoot;
+  }
+
+  /**
+   * 单独运行 115 资源匹配面板
+   */
+  async runDrive115Match(): Promise<void> {
+    log('[Drive115Match] runDrive115Match entered', {
+      videoId: this.videoId,
+      enabled: this.options.enableDrive115Match,
+      pathname: window.location.pathname,
+    });
+    if (!this.videoId || !this.options.enableDrive115Match) return;
+
+    const panel = await this.ensureDrive115MatchPanel();
+    if (!panel || panel.getAttribute('data-jdb-drive115-loaded') === 'true') return;
+
+    panel.setAttribute('data-jdb-drive115-loaded', 'true');
+    this.injectDrive115MatchStyles();
+    this.renderDrive115MatchLoading(panel);
+
+    try {
+      const enabled = await isDrive115Enabled();
+      if (!enabled) {
+        this.renderDrive115MatchStatus(panel, '115 未启用，开启后可匹配网盘内资源');
+        return;
+      }
+      const files = await searchDrive115Files(this.videoId);
+      const matched = this.filterDrive115MatchResults(files, this.videoId);
+      this.renderDrive115MatchResults(panel, matched);
+    } catch (error: any) {
+      const message = error?.message || '115 匹配失败';
+      log('[Drive115Match] Failed to load match panel:', error);
+      this.renderDrive115MatchStatus(panel, message, true);
+    }
   }
 
   private async processReviewBreaking(
