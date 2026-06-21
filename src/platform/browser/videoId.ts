@@ -5,11 +5,11 @@ import { extractVideoId as extractSharedVideoId } from '../../shared/utils/video
 function logVideoId(...args: any[]): void {
     try {
         const verbose = typeof window !== 'undefined' && (window as any).__JDB_VERBOSE;
-        if (verbose !== false) {
+        if (verbose === true) {
             console.log('[JavDB Ext]', ...args);
         }
     } catch {
-        console.log('[JavDB Ext]', ...args);
+        // 忽略日志失败
     }
 }
 

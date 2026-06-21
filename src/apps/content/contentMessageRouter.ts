@@ -55,7 +55,7 @@ export function installContentMessageRouter(): void {
                 }
                 log('Updated display settings:', settings.display);
                 log('Updated translation targets:', (STATE.settings as any)?.translation?.targets);
-                processVisibleItems();
+                processVisibleItems({ force: true });
 
                 try {
                     listEnhancementManager.updateConfig({
@@ -120,7 +120,7 @@ export function installContentMessageRouter(): void {
             getValue<EmbyLibraryState>(STORAGE_KEYS.EMBY_LIBRARY_STATE, { entries: {}, updatedAt: 0 })
                 .then((state) => {
                     STATE.embyLibraryState = state;
-                    processVisibleItems();
+                    processVisibleItems({ force: true, enqueueRealtimeCheck: false });
                     const videoId = extractVideoIdFromPage();
                     if (videoId) {
                         renderDetailLibraryStatus(videoId);
@@ -142,7 +142,6 @@ export function installContentMessageRouter(): void {
             return false;
         } else if (message.type === 'UPDATE_CONTENT_FILTER') {
             if (message.keywordRules) {
-                processVisibleItems();
                 setTimeout(() => {
                     contentFilterManager.updateKeywordRules(message.keywordRules);
                     log(`Content filter rules updated: ${message.keywordRules.length} rules`);

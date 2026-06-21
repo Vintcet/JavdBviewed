@@ -6,9 +6,9 @@ type JavdbTheme = 'dark' | 'light';
 const log = (...args: any[]) => {
   try {
     const verbose = typeof window !== 'undefined' && (window as any).__JDB_VERBOSE;
-    if (verbose !== false) console.log('[JavDB Ext]', ...args);
+    if (verbose === true) console.log('[JavDB Ext]', ...args);
   } catch {
-    console.log('[JavDB Ext]', ...args);
+    // 忽略日志失败
   }
 };
 

@@ -757,6 +757,7 @@ export async function handleVideoDetailPage(): Promise<void> {
                     label: 'videoEnhancement:runDrive115Match',
                     idle: true,
                     idleTimeout: 5000,
+                    delayMs: 1200,
                     dependsOn: ['videoStatus:initialSync'],
                 });
             }

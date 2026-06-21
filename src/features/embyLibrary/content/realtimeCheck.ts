@@ -116,7 +116,7 @@ export const embyLibraryRealtimeCheckQueue = new EmbyLibraryRealtimeCheckQueue({
   },
   onReprocess: () => {
     void import('../../listEnhancement/content/itemProcessor')
-      .then(({ processVisibleItems }) => processVisibleItems())
+      .then(({ processVisibleItems }) => processVisibleItems({ force: true, enqueueRealtimeCheck: false }))
       .catch((error) => log('Failed to reprocess list after Emby library check:', error as any));
   },
 });

@@ -4,11 +4,19 @@
 const log = (...args: any[]) => {
   try {
     const verbose = typeof window !== 'undefined' && (window as any).__JDB_VERBOSE;
-    if (verbose !== false) {
+    if (verbose === true) {
       console.log('[JavDB Ext]', ...args);
     }
   } catch {
-    console.log('[JavDB Ext]', ...args);
+    // 忽略日志失败
+  }
+};
+
+const isVerboseEnabled = (): boolean => {
+  try {
+    return typeof window !== 'undefined' && (window as any).__JDB_VERBOSE === true;
+  } catch {
+    return false;
   }
 };
 
@@ -180,8 +188,10 @@ export class PerformanceOptimizer {
    */
   private performMemoryCleanup(): void {
     try {
-      // P1 FIX: 清理前先 flush 到 storage，而不是直接截断丢失工作
-      this.flushQueuesToStorage();
+      const hasQueuePressure = this.requestQueue.length > 20 || this.domOperationQueue.length > 200;
+      if (isVerboseEnabled() || hasQueuePressure) {
+        this.flushQueuesToStorage();
+      }
 
       // 清理请求队列中的过期请求（保留更多缓冲空间）
       if (this.requestQueue.length > 20) {

@@ -35,7 +35,7 @@ class InitOrchestrator {
   private started = false;
   private timeline: Array<{ phase: InitPhase; label: string; status: 'scheduled' | 'running' | 'done' | 'error'; ts: number; detail?: any; durationMs?: number }>= [];
   private t0: number | null = null; // run() 开始时刻，用于相对时间
-  private verbose = true; // 统一开关，控制是否打印详细日志
+  private verbose = false; // 统一开关，控制是否打印详细日志
   private listeners: Record<string, Array<(payload: any) => void>> = {};
   private blueprintDescriptors = new Map<string, GlobalTaskDescriptor>();
   private taskIndex = new Map<string, ManagedScheduledTask>();
@@ -128,8 +128,12 @@ class InitOrchestrator {
   }
 
   private log(...args: any[]) {
-    if (!this.verbose) return;
+    if (!this.isDiagnosticsEnabled()) return;
     try { console.log('[Orchestrator]', ...args); } catch {}
+  }
+
+  private isDiagnosticsEnabled(): boolean {
+    return this.verbose || (typeof window !== 'undefined' && (window as any).__JDB_VERBOSE === true);
   }
 
   private clearDeferredRetry(phase: InitPhase, label: string): void {
@@ -244,7 +248,9 @@ class InitOrchestrator {
    */
   private updateMetrics(durationMs: number, success: boolean, isTimeout: boolean = false, taskLabel?: string): void {
     this.metrics.recordTask(durationMs, success, isTimeout, taskLabel);
-    this.scheduleMetricsSave();
+    if (this.isDiagnosticsEnabled()) {
+      this.scheduleMetricsSave();
+    }
   }
 
   /**
@@ -302,6 +308,8 @@ class InitOrchestrator {
    */
   private async saveTaskDetail(phase: InitPhase, label: string, status: 'done' | 'error', durationMs: number | undefined, error?: string): Promise<void> {
     try {
+      if (!this.isDiagnosticsEnabled()) return;
+
       const pageContext = typeof window !== 'undefined' ? getPageContext() : { pageUrl: '', pageType: 'generic', mainId: '', pageInstanceId: '' };
       const trackedTask = this.taskIndex.get(label);
       const registeredAt = trackedTask?.managedDescriptor?.createdAt || 0;

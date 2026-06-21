@@ -14,11 +14,17 @@ const MAX_CONCURRENT_TRANSLATIONS = 3;
 const ORIGINAL_TITLE_ATTR = 'data-x-original-title';
 const TRANSLATED_TITLE_ATTR = 'data-x-translated-title';
 const TRANSLATION_MODE_ATTR = 'data-title-translation-mode';
+const QUEUED_STATE = 'queued';
+const VIEWPORT_ROOT_MARGIN = '900px';
 
 const memoryCache = new Map<string, CacheEntry>();
 const pendingByKey = new Map<string, Promise<string | null>>();
 let activeCount = 0;
 const queue: Array<() => void> = [];
+let jhsCache: Record<string, unknown> | null = null;
+let jhsCacheFlushTimer: number | null = null;
+let titleTranslationObserver: IntersectionObserver | null = null;
+const queuedTitleItems = new WeakMap<HTMLElement, { videoInfo: ListPreviewVideoInfo; options: TranslateListItemTitleOptions }>();
 
 const translator = new TranslatorService({
   ...DEFAULT_TRANSLATOR_CONFIG,
@@ -79,12 +85,14 @@ function writeCache(key: string, translated: string): void {
 function readJhsCache(code?: string): string | null {
   if (!code) return null;
   try {
-    const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const cached = parsed?.[code];
+    if (!jhsCache) {
+      const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
+      jhsCache = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+    }
+    const cached = jhsCache?.[code];
     return typeof cached === 'string' && cached.trim() ? normalizeTitle(cached) : null;
   } catch {
+    jhsCache = {};
     return null;
   }
 }
@@ -92,10 +100,20 @@ function readJhsCache(code?: string): string | null {
 function writeJhsCache(code: string | undefined, translated: string): void {
   if (!code) return;
   try {
-    const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
-    const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : {};
-    parsed[code] = translated;
-    localStorage.setItem(JHS_TRANSLATE_CACHE_KEY, JSON.stringify(parsed));
+    if (!jhsCache) {
+      const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
+      jhsCache = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+    }
+    jhsCache[code] = translated;
+    if (jhsCacheFlushTimer !== null) {
+      window.clearTimeout(jhsCacheFlushTimer);
+    }
+    jhsCacheFlushTimer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(JHS_TRANSLATE_CACHE_KEY, JSON.stringify(jhsCache || {}));
+      } catch {}
+      jhsCacheFlushTimer = null;
+    }, 500);
   } catch {}
 }
 
@@ -193,7 +211,48 @@ export interface TranslateListItemTitleOptions {
   replaceOriginal?: boolean;
 }
 
-export async function translateListItemTitle(
+function isNearViewport(item: HTMLElement): boolean {
+  if (typeof window === 'undefined') return true;
+  const rect = item.getBoundingClientRect();
+  const margin = 900;
+  return rect.bottom >= -margin && rect.top <= window.innerHeight + margin;
+}
+
+function getTitleTranslationObserver(): IntersectionObserver | null {
+  if (typeof IntersectionObserver === 'undefined') return null;
+  if (!titleTranslationObserver) {
+    titleTranslationObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const item = entry.target as HTMLElement;
+        titleTranslationObserver?.unobserve(item);
+        const queued = queuedTitleItems.get(item);
+        if (!queued) return;
+        queuedTitleItems.delete(item);
+        void runListItemTitleTranslation(item, queued.videoInfo, queued.options);
+      });
+    }, { rootMargin: VIEWPORT_ROOT_MARGIN });
+  }
+  return titleTranslationObserver;
+}
+
+function queueTitleTranslation(
+  item: HTMLElement,
+  videoInfo: ListPreviewVideoInfo,
+  options: TranslateListItemTitleOptions,
+  mode: string,
+): boolean {
+  if (isNearViewport(item)) return false;
+  queuedTitleItems.set(item, { videoInfo, options });
+  item.setAttribute('data-title-translation-state', QUEUED_STATE);
+  item.setAttribute(TRANSLATION_MODE_ATTR, mode);
+  const observer = getTitleTranslationObserver();
+  if (!observer) return false;
+  observer.observe(item);
+  return true;
+}
+
+async function runListItemTitleTranslation(
   item: HTMLElement,
   videoInfo: ListPreviewVideoInfo,
   options: TranslateListItemTitleOptions = {},
@@ -249,7 +308,30 @@ export async function translateListItemTitle(
   }
 }
 
+export async function translateListItemTitle(
+  item: HTMLElement,
+  videoInfo: ListPreviewVideoInfo,
+  options: TranslateListItemTitleOptions = {},
+): Promise<void> {
+  const mode = options.replaceOriginal === true ? 'replace' : 'append';
+  if (
+    item.getAttribute('data-title-translation-state') === QUEUED_STATE &&
+    item.getAttribute(TRANSLATION_MODE_ATTR) === mode
+  ) {
+    queuedTitleItems.set(item, { videoInfo, options });
+    return;
+  }
+
+  if (queueTitleTranslation(item, videoInfo, options, mode)) {
+    return;
+  }
+
+  await runListItemTitleTranslation(item, videoInfo, options);
+}
+
 export function clearListItemTitleTranslation(item: HTMLElement): void {
+  queuedTitleItems.delete(item);
+  titleTranslationObserver?.unobserve(item);
   const titleElement = item.querySelector<HTMLElement>('div.video-title');
   if (titleElement) restoreOriginalTitle(titleElement);
   item.querySelectorAll('.x-title-translation').forEach(node => node.remove());

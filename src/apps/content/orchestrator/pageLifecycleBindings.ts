@@ -12,6 +12,7 @@ type PageLifecycleWindowLike = {
   location?: { href?: string };
   addEventListener?: (event: string, listener: () => void) => void;
   __initOrchestrator__?: unknown;
+  __JDB_VERBOSE?: boolean;
 };
 
 type LoggerLike = {
@@ -65,6 +66,8 @@ export function installOrchestratorPageLifecycleBindings(
 
     windowRef.addEventListener('beforeunload', () => {
       try {
+        if (windowRef.__JDB_VERBOSE !== true) return;
+
         const pageUrl = windowRef.location?.href || '';
         const metrics = {
           ...orchestrator.getMetrics(),

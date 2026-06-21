@@ -287,9 +287,7 @@ export class VideoDetailEnhancer {
       try {
         const engine = resp.data.service || 'google';
         // 单行可读输出，避免只显示 "Object" 的情况
-        console.log(
-          `[Title Translation] provider=google engine=${engine} source=${resp.source} cached=${resp.cached === true} original="${original}" translated="${translated}"`
-        );
+        log(`[Title Translation] provider=google engine=${engine} source=${resp.source} cached=${resp.cached === true}`);
       } catch {}
 
       await yieldToMainThread(0);
@@ -2030,8 +2028,6 @@ export class VideoDetailEnhancer {
             this.addReviewBreakerBanner(listEl, Math.max(mergedReviews.length, totalCount), totalCount);
             
             this.displayNativeReviews(mergedReviews, listEl, totalCount);
-            this.enhanceExistingReviewContent();
-            this.inject115ButtonsIntoReviews();
             const err = reviewsRoot.querySelector('#jhs-review-error') as HTMLElement | null;
             if (err) err.remove();
             log('[ReviewBreaker] Native reviews injected.');
@@ -2807,9 +2803,8 @@ export class VideoDetailEnhancer {
     const hideNativeReviews = () => {
       const nativeReviews = dl.querySelectorAll('.review-item:not(.jhs-review-item)');
       log(`[ReviewBreaker] hideNativeReviews: found ${nativeReviews.length} native reviews to hide`);
-      nativeReviews.forEach((el, index) => {
+      nativeReviews.forEach((el) => {
         (el as HTMLElement).style.display = 'none';
-        log(`[ReviewBreaker] Hidden native review ${index + 1}: ${el.id}`);
       });
     };
 
@@ -2827,9 +2822,6 @@ export class VideoDetailEnhancer {
       // 清空JHS评论
       clearJhsReviews();
 
-      // 确保原生评论始终隐藏
-      hideNativeReviews();
-
       // 计算当前页的评论范围
       const startIndex = (page - 1) * pageSize;
       const endIndex = Math.min(startIndex + pageSize, filtered.length);
@@ -2837,23 +2829,12 @@ export class VideoDetailEnhancer {
       
       log(`[ReviewBreaker] Rendering ${pageReviews.length} reviews (index ${startIndex} to ${endIndex})`);
 
-      // 渲染当前页评论
-      pageReviews.forEach((review, index) => {
+      const fragment = document.createDocumentFragment();
+      pageReviews.forEach((review) => {
         const element = this.createNativeReviewElement(review);
-        dl.appendChild(element);
-        log(`[ReviewBreaker] Appended review ${index + 1}/${pageReviews.length}: ${review.id}, element.id=${element.id}, className=${element.className}`);
+        fragment.appendChild(element);
       });
-      
-      // 检查DOM状态
-      const allReviewItems = dl.querySelectorAll('.review-item');
-      const jhsReviewItems = dl.querySelectorAll('.jhs-review-item');
-      const nativeReviewItems = dl.querySelectorAll('.review-item:not(.jhs-review-item)');
-      
-      log(`[ReviewBreaker] DOM check after render:`);
-      log(`[ReviewBreaker]   - Total .review-item: ${allReviewItems.length}`);
-      log(`[ReviewBreaker]   - JHS reviews (.jhs-review-item): ${jhsReviewItems.length}`);
-      log(`[ReviewBreaker]   - Native reviews (not .jhs-review-item): ${nativeReviewItems.length}`);
-      log(`[ReviewBreaker]   - dl.children.length: ${dl.children.length}`);
+      dl.appendChild(fragment);
 
       this.enhanceExistingReviewContent();
       this.inject115ButtonsIntoReviews();
@@ -2992,9 +2973,8 @@ export class VideoDetailEnhancer {
 
     // 渲染第一页
     log(`[ReviewBreaker] Starting to render first page`);
+    hideNativeReviews();
     renderPage(1);
-    this.enhanceExistingReviewContent();
-    this.inject115ButtonsIntoReviews();
     log(`[ReviewBreaker] displayNativeReviews completed`);
   }
 
@@ -3922,7 +3902,7 @@ export class VideoDetailEnhancer {
     video.loop = true;
     video.playsInline = true;
     video.controls = true;
-    video.preload = 'auto';
+    video.preload = 'metadata';
     video.volume = Math.max(0, Math.min(1, volume)); // 确保音量在 0-1 范围内
     video.disablePictureInPicture = true;
     video.disableRemotePlayback = true;

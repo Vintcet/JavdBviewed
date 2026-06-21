@@ -10,6 +10,7 @@ async function applyConsoleSettingsFromStorage(): Promise<void> {
     try {
         const settings = await getSettings();
         const logging: any = settings.logging || {};
+        (window as any).__JDB_VERBOSE = logging.verboseMode === true;
         const ctrl: any = (window as any).__JDB_CONSOLE__;
         if (!ctrl) return;
         if (logging.consoleLevel) ctrl.setLevel(logging.consoleLevel);
@@ -36,6 +37,8 @@ async function applyConsoleSettingsFromStorage(): Promise<void> {
 }
 
 export function installContentConsoleSettingsBridge(): void {
+    (window as any).__JDB_VERBOSE = false;
+
     installConsoleProxy({
         level: 'DEBUG',
         format: { showTimestamp: true, timestampStyle: 'hms', timeZone: 'Asia/Shanghai', showSource: true, color: true },

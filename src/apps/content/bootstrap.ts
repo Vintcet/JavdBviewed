@@ -558,14 +558,16 @@ async function initialize(): Promise<void> {
         });
         if (!isVideoPage) {
             initOrchestrator.add('high', () => listEnhancementManager.initialize(), { label: 'listEnhancement:init', delayMs: 100, priority: 7, visibilityPolicy: 'background_allowed' });
-            initOrchestrator.add('high', () => {
-                try {
-                    log('Reprocessing items after listEnhancement initialization');
-                    processVisibleItems();
-                } catch (e) {
-                    log('Reprocess after listEnhancement failed:', e as any);
-                }
-            }, { label: 'list:reprocess:after-listEnhancement', delayMs: 300, priority: 6, visibilityPolicy: 'background_allowed' });
+            if (isActorPage) {
+                initOrchestrator.add('high', () => {
+                    try {
+                        log('Processing actor-page items after listEnhancement initialization');
+                        processVisibleItems();
+                    } catch (e) {
+                        log('Actor-page item processing after listEnhancement failed:', e as any);
+                    }
+                }, { label: 'list:process:actor-after-listEnhancement', delayMs: 300, priority: 6, visibilityPolicy: 'background_allowed' });
+            }
         }
     }
 

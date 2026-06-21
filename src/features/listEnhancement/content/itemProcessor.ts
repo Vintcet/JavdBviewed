@@ -7,7 +7,12 @@ import { buildRealtimeCheckConfig, embyLibraryRealtimeCheckQueue } from '../../e
 import { isPageProperlyLoaded } from '../../videoDetail';
 import { renderListStatusQuickActions } from './statusQuickActions';
 
-export function processVisibleItems(): void {
+export interface ProcessVisibleItemsOptions {
+    force?: boolean;
+    enqueueRealtimeCheck?: boolean;
+}
+
+export function processVisibleItems(options: ProcessVisibleItemsOptions = {}): void {
     // 首先检查页面是否正常加载
     if (!isPageProperlyLoaded()) {
         log('Page not properly loaded (no navbar-item found), skipping list processing to avoid data corruption');
@@ -28,11 +33,12 @@ export function processVisibleItems(): void {
         }
     }
 
-    // 重置所有处理标记，允许重新处理
-    items.forEach(item => {
-        item.removeAttribute('data-processed');
-        item.removeAttribute('data-filter-processed');
-    });
+    if (options.force) {
+        // 只重置本模块的处理标记。内容过滤的 data-filter-processed 由 contentFilterManager 自己维护。
+        items.forEach(item => {
+            item.removeAttribute('data-processed');
+        });
+    }
 
     const visibleCodes: string[] = [];
     items.forEach((item) => {
@@ -42,10 +48,12 @@ export function processVisibleItems(): void {
         }
     });
 
-    embyLibraryRealtimeCheckQueue.enqueue(
-        visibleCodes,
-        buildRealtimeCheckConfig(STATE.settings),
-    );
+    if (options.enqueueRealtimeCheck !== false && visibleCodes.length > 0) {
+        embyLibraryRealtimeCheckQueue.enqueue(
+            visibleCodes,
+            buildRealtimeCheckConfig(STATE.settings),
+        );
+    }
 }
 
 export function setupObserver(): void {
@@ -211,7 +219,6 @@ function processItem(item: HTMLElement): string | null {
             const record = STATE.records[videoId];
 
             if (record) {
-                log(`Found record for ${videoId}: status=${record.status}`);
                 switch (record.status) {
                     case VIDEO_STATUS.VIEWED:
                         addTag(tagContainer, '已观看', 'is-success');
