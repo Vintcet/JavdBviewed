@@ -150,7 +150,7 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         /* JHS 风格宽屏布局：减少左右留白，让列表更接近浏览器边缘 */
         body {
           --x-list-shell-width: calc(100vw - 24px);
-          --x-list-controls-width: min(1120px, calc(100vw - 24px));
+          --x-list-controls-width: var(--x-list-shell-width);
         }
 
         body .section {
@@ -233,12 +233,14 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
 
     if (isActorPage) {
       styleContent += `
-        /* 演员页：列表可以变宽，但演员资料头部保持原站紧凑布局 */
+        /* 演员页：资料头部保持原站内部排版，但外层与列表同样贴近页面边缘 */
         body .section > .container:has(.actor-section-name),
         body section > .container:has(.actor-section-name),
+        body .section > .container:has(.avatar-box),
+        body section > .container:has(.avatar-box),
         body .actor-section .container {
-          width: min(1120px, calc(100vw - 24px)) !important;
-          max-width: 1120px !important;
+          width: var(--x-list-shell-width) !important;
+          max-width: var(--x-list-shell-width) !important;
           margin-left: auto !important;
           margin-right: auto !important;
           padding-left: 0 !important;

@@ -85,12 +85,29 @@ describe('list enhancement helpers', () => {
     });
 
     expect(result.styleContent).toContain('calc(100vw - 24px)');
-    expect(result.styleContent).toContain('--x-list-controls-width: min(1120px, calc(100vw - 24px))');
+    expect(result.styleContent).toContain('--x-list-controls-width: var(--x-list-shell-width)');
     expect(result.styleContent).toContain('body .main-tabs');
     expect(result.styleContent).toContain('body .section-addition');
     expect(result.styleContent).toContain('margin-left: auto !important');
     expect(result.styleContent).toContain('body #x-nav-search-box');
     expect(result.styleContent).toContain('data-x-original-search-hidden');
+  });
+
+  it('keeps actor page profile and filters aligned to the wide list shell', () => {
+    const result = buildListDisplayControlStyles({
+      columnCount: 5,
+      containerWidth: 100,
+      enableContainerExpansion: false,
+      enableWideLayout: true,
+      enableSearchBarLayout: true,
+      isVideoDetailPage: false,
+      isActorPage: true,
+    });
+
+    expect(result.styleContent).toContain('body .section > .container:has(.actor-section-name)');
+    expect(result.styleContent).toContain('body .section > .container:has(.avatar-box)');
+    expect(result.styleContent).toContain('width: var(--x-list-shell-width) !important');
+    expect(result.styleContent).not.toContain('max-width: 1120px');
   });
 
   it('matches actors from title suffix and weighted fallback candidates without duplicates', () => {
