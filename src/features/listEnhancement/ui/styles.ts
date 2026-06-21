@@ -2,6 +2,7 @@ import type { ListDisplayControlConfig } from '../domain/config';
 
 export interface ListDisplayStyleInput extends Omit<ListDisplayControlConfig, 'enabled'> {
   isVideoDetailPage: boolean;
+  isActorPage?: boolean;
 }
 
 export interface ListDisplayStyleResult {
@@ -105,6 +106,7 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
     enableWideLayout,
     enableSearchBarLayout,
     isVideoDetailPage,
+    isActorPage = false,
   } = input;
   const itemWidthCalc = `calc(${100 / columnCount}% - 10px)`;
   const marginValue = containerWidth > 100
@@ -128,10 +130,9 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         `;
     } else {
       styleContent += `
-        /* 列表页：搜索栏和内容容器扩展到100%宽度 - 覆盖Bulma的container限制 */
+        /* 列表页：搜索栏和列表容器扩展到100%宽度 - 覆盖Bulma的container限制 */
         body #search-bar-wrap,
-        body section .container,
-        body .section .container {
+        body .container:has(.movie-list) {
           width: 100% !important;
           max-width: 100% !important;
           margin-left: auto !important;
@@ -157,8 +158,6 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
           padding-right: 12px !important;
         }
 
-        body .section > .container,
-        body section > .container,
         body .container:has(.movie-list) {
           width: var(--x-list-shell-width) !important;
           max-width: var(--x-list-shell-width) !important;
@@ -231,17 +230,34 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
           margin-left: auto !important;
         }
       `;
+
+    if (isActorPage) {
+      styleContent += `
+        /* 演员页：列表可以变宽，但演员资料头部保持原站紧凑布局 */
+        body .section > .container:has(.actor-section-name),
+        body section > .container:has(.actor-section-name),
+        body .actor-section .container {
+          width: min(1120px, calc(100vw - 24px)) !important;
+          max-width: 1120px !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          box-sizing: border-box !important;
+        }
+      `;
+    }
   }
 
   if (enableSearchBarLayout) {
     styleContent += `
         /* JHS 风格搜索栏：在顶部导航中使用紧凑深色搜索盒 */
         body #x-nav-search-box {
-          display: flex !important;
+          display: none !important;
           align-items: center !important;
-          flex: 1 1 auto !important;
-          min-width: 520px !important;
-          max-width: 560px !important;
+          flex: 1 1 520px !important;
+          min-width: 0 !important;
+          max-width: 680px !important;
           padding: 0 8px !important;
           margin-left: 8px !important;
           background: transparent !important;
@@ -298,38 +314,29 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         }
 
         body #search-bar-container[data-x-original-search-hidden="true"],
-        body #search-bar-wrap[data-x-original-search-hidden="true"],
         body .search-recent-keywords {
           display: none !important;
         }
 
-        body #search-bar-container:not([data-x-nav-search]),
-        body #search-bar-wrap:not([data-x-nav-search]) {
-          width: var(--x-list-controls-width, min(1120px, calc(100vw - 24px))) !important;
-          max-width: calc(100vw - 24px) !important;
-          margin: 8px auto 12px !important;
-          padding: 8px 12px !important;
-          box-sizing: border-box !important;
-          border-radius: 8px !important;
-          background: rgba(255, 255, 255, 0.94) !important;
-          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
-        }
-
-        @media (max-width: 1280px) {
+        @media (min-width: 1601px) {
           body #x-nav-search-box {
-            min-width: 360px !important;
-            max-width: 440px !important;
+            display: flex !important;
+          }
+
+          body #search-bar-container[data-x-original-search-hidden="true"],
+          body #search-bar-wrap[data-x-original-search-hidden="true"] {
+            display: none !important;
           }
         }
 
-        @media (max-width: 1023px) {
+        @media (max-width: 1600px) {
           body #x-nav-search-box {
-            flex-basis: 100% !important;
-            max-width: 100% !important;
-            min-width: 0 !important;
-            width: 100% !important;
-            padding: 6px 10px !important;
-            margin-left: 0 !important;
+            display: none !important;
+          }
+
+          body #search-bar-container[data-x-original-search-hidden="true"],
+          body #search-bar-wrap[data-x-original-search-hidden="true"] {
+            display: block !important;
           }
         }
       `;

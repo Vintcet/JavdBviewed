@@ -67,6 +67,7 @@ export function applyListDisplayControl(options: ApplyListDisplayControlOptions)
     enableWideLayout,
     enableSearchBarLayout,
     isVideoDetailPage: windowRef.location.pathname.startsWith('/v/'),
+    isActorPage: windowRef.location.pathname.startsWith('/actors/'),
   });
 
   const style = documentRef.createElement('style');
@@ -122,7 +123,6 @@ export function mountSearchBarIntoNavbar(documentRef: Document): boolean {
       searchBar.setAttribute('data-x-prev-display', searchBar.style.display || '');
     }
     searchBar.setAttribute('data-x-original-search-hidden', 'true');
-    searchBar.style.display = 'none';
   }
 
   let box = documentRef.getElementById(NAV_SEARCH_BOX_ID) as HTMLElement | null;

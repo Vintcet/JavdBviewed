@@ -103,7 +103,7 @@ describe('list display control UI helpers', () => {
 
     expect(mountSearchBarIntoNavbar(document)).toBe(true);
     expect(document.querySelector('#x-nav-search-box #x-nav-search-keyword')).not.toBeNull();
-    expect(document.querySelector<HTMLElement>('#search-origin #search-bar-container')?.style.display).toBe('none');
+    expect(document.querySelector<HTMLElement>('#search-origin #search-bar-container')?.dataset.xOriginalSearchHidden).toBe('true');
 
     restoreSearchBarPlacement(document);
     expect(document.querySelector('#search-origin #search-bar-container')).not.toBeNull();
