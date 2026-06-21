@@ -147,6 +147,11 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
   if (enableWideLayout && !isVideoDetailPage) {
     styleContent += `
         /* JHS 风格宽屏布局：减少左右留白，让列表更接近浏览器边缘 */
+        body {
+          --x-list-shell-width: calc(100vw - 24px);
+          --x-list-controls-width: min(1120px, calc(100vw - 24px));
+        }
+
         body .section {
           padding-left: 12px !important;
           padding-right: 12px !important;
@@ -155,8 +160,8 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         body .section > .container,
         body section > .container,
         body .container:has(.movie-list) {
-          width: calc(100vw - 24px) !important;
-          max-width: calc(100vw - 24px) !important;
+          width: var(--x-list-shell-width) !important;
+          max-width: var(--x-list-shell-width) !important;
           margin-left: auto !important;
           margin-right: auto !important;
           padding-left: 0 !important;
@@ -165,10 +170,25 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         }
 
         body .main-tabs,
+        body .tabs,
+        body .toolbar,
+        body .section-addition {
+          width: var(--x-list-controls-width) !important;
+          max-width: var(--x-list-controls-width) !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          box-sizing: border-box !important;
+        }
+
+        body .main-tabs,
         body .tabs {
+          display: flex !important;
           overflow-x: hidden !important;
           flex-wrap: wrap !important;
           justify-content: flex-start !important;
+          align-items: center !important;
+          margin-top: 8px !important;
+          margin-bottom: 8px !important;
         }
 
         body .main-tabs ul,
@@ -182,6 +202,33 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
           flex-wrap: wrap !important;
           gap: 8px !important;
           align-items: center !important;
+          justify-content: flex-start !important;
+          margin-top: 6px !important;
+          margin-bottom: 10px !important;
+        }
+
+        body .section-addition {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 8px !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          margin-top: 6px !important;
+          margin-bottom: 10px !important;
+        }
+
+        body .main-tabs > div,
+        body .tabs > div,
+        body .section-addition > div {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 6px !important;
+          align-items: center !important;
+        }
+
+        body .main-tabs > div:last-child,
+        body .tabs > div:last-child {
+          margin-left: auto !important;
         }
       `;
   }
@@ -191,7 +238,7 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         /* JHS 风格搜索栏优化：紧凑、靠上、宽屏自适应 */
         body #search-bar-container,
         body #search-bar-wrap {
-          width: min(1120px, calc(100vw - 24px)) !important;
+          width: var(--x-list-controls-width, min(1120px, calc(100vw - 24px))) !important;
           max-width: calc(100vw - 24px) !important;
           margin: 8px auto 12px !important;
           padding: 8px 12px !important;

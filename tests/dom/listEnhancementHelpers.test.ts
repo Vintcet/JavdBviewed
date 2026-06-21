@@ -85,7 +85,10 @@ describe('list enhancement helpers', () => {
     });
 
     expect(result.styleContent).toContain('calc(100vw - 24px)');
+    expect(result.styleContent).toContain('--x-list-controls-width: min(1120px, calc(100vw - 24px))');
     expect(result.styleContent).toContain('body .main-tabs');
+    expect(result.styleContent).toContain('body .section-addition');
+    expect(result.styleContent).toContain('margin-left: auto !important');
     expect(result.styleContent).toContain('body #search-bar-container');
     expect(result.styleContent).toContain('position: sticky');
   });
