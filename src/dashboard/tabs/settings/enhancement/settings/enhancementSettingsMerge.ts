@@ -99,9 +99,9 @@ export function mergeEnhancementSettingsForSave(
       listDisplayControl: {
         ...existingListDisplayControl,
         enabled: true,
-        columnCount: parseNumber(host.listColumnCount?.value, existingListDisplayControl.columnCount ?? 4),
+        columnCount: parseNumber(host.listColumnCount?.value, existingListDisplayControl.columnCount ?? 5),
         containerWidth: parseNumber(host.listContainerWidth?.value, existingListDisplayControl.containerWidth ?? 100),
-        enableContainerExpansion: host.enableContainerExpansion?.checked ?? existingListDisplayControl.enableContainerExpansion ?? false,
+        enableContainerExpansion: host.enableContainerExpansion?.checked ?? existingListDisplayControl.enableContainerExpansion ?? true,
         enableWideLayout: host.enableWideLayout?.checked ?? existingListDisplayControl.enableWideLayout ?? true,
         enableSearchBarLayout: host.enableSearchBarLayout?.checked ?? existingListDisplayControl.enableSearchBarLayout ?? true,
       },

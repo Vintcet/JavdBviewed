@@ -235,9 +235,81 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
 
   if (enableSearchBarLayout) {
     styleContent += `
-        /* JHS 风格搜索栏优化：紧凑、靠上、宽屏自适应 */
-        body #search-bar-container,
-        body #search-bar-wrap {
+        /* JHS 风格搜索栏：复用原站控件，收进顶部导航右侧 */
+        body .navbar #x-nav-search-host {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: flex-end !important;
+          flex: 1 1 520px !important;
+          min-width: 360px !important;
+          max-width: 560px !important;
+          padding: 4px 0 4px 12px !important;
+          margin-left: auto !important;
+          box-sizing: border-box !important;
+          background: transparent !important;
+        }
+
+        body .navbar #x-nav-search-host #search-bar-container,
+        body .navbar #x-nav-search-host #search-bar-wrap {
+          display: block !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+        }
+
+        body .navbar #x-nav-search-host form,
+        body .navbar #x-nav-search-host .field,
+        body .navbar #x-nav-search-host .field.has-addons,
+        body .navbar #x-nav-search-host .control {
+          display: flex !important;
+          align-items: center !important;
+          flex-wrap: nowrap !important;
+          gap: 6px !important;
+          margin-bottom: 0 !important;
+        }
+
+        body .navbar #x-nav-search-host .control {
+          flex: 0 0 auto !important;
+        }
+
+        body .navbar #x-nav-search-host .control:has(input.input),
+        body .navbar #x-nav-search-host .control.search-input,
+        body .navbar #x-nav-search-host .field > .control:nth-child(2) {
+          flex: 1 1 230px !important;
+          min-width: 160px !important;
+        }
+
+        body .navbar #x-nav-search-host input.input,
+        body .navbar #x-nav-search-host .input,
+        body .navbar #x-nav-search-host select,
+        body .navbar #x-nav-search-host .select select {
+          height: 38px !important;
+          min-height: 38px !important;
+          border-radius: 4px !important;
+          box-shadow: none !important;
+          font-size: 14px !important;
+        }
+
+        body .navbar #x-nav-search-host .button {
+          height: 38px !important;
+          min-height: 38px !important;
+          border-radius: 4px !important;
+          padding-left: 14px !important;
+          padding-right: 14px !important;
+          white-space: nowrap !important;
+        }
+
+        body .search-recent-keywords {
+          display: none !important;
+        }
+
+        body #search-bar-container:not([data-x-nav-search]),
+        body #search-bar-wrap:not([data-x-nav-search]) {
           width: var(--x-list-controls-width, min(1120px, calc(100vw - 24px))) !important;
           max-width: calc(100vw - 24px) !important;
           margin: 8px auto 12px !important;
@@ -248,35 +320,13 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
         }
 
-        body #search-bar-container form,
-        body #search-bar-wrap form,
-        body #search-bar-container .field,
-        body #search-bar-wrap .field {
-          margin-bottom: 0 !important;
-        }
-
-        body #search-bar-container input.input,
-        body #search-bar-wrap input.input,
-        body #search-bar-container .input,
-        body #search-bar-wrap .input {
-          min-height: 38px !important;
-          border-radius: 6px !important;
-          box-shadow: none !important;
-        }
-
-        body #search-bar-container .button,
-        body #search-bar-wrap .button {
-          min-height: 38px !important;
-          border-radius: 6px !important;
-        }
-
-        @media (min-width: 769px) {
-          body #search-bar-container,
-          body #search-bar-wrap {
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 30 !important;
-            backdrop-filter: blur(10px);
+        @media (max-width: 900px) {
+          body .navbar #x-nav-search-host {
+            flex-basis: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            width: 100% !important;
+            padding: 6px 10px !important;
           }
         }
       `;

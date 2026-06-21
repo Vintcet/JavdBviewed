@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   applyListDisplayControl,
+  mountSearchBarIntoNavbar,
   processListDisplayContainers,
+  restoreSearchBarPlacement,
 } from '../../src/features/listEnhancement/ui/listDisplayControl';
 
 function createWindowLocation(hostname: string, pathname = '/search'): Window {
@@ -91,5 +93,20 @@ describe('list display control UI helpers', () => {
     expect(processed).toBe(1);
     expect(container.classList.contains('cols-3')).toBe(false);
     expect(container.getAttribute('data-x-cols-override')).toBe('true');
+  });
+
+  it('moves the existing search bar into navbar and can restore it', () => {
+    document.body.innerHTML = `
+      <nav class="navbar"><div class="navbar-menu"><div class="navbar-end"></div></div></nav>
+      <section><div id="search-origin"><div id="search-bar-container"><form></form></div></div></section>
+    `;
+
+    expect(mountSearchBarIntoNavbar(document)).toBe(true);
+    expect(document.querySelector('#x-nav-search-host #search-bar-container')).not.toBeNull();
+    expect(document.querySelector('#search-origin #search-bar-container')).toBeNull();
+
+    restoreSearchBarPlacement(document);
+    expect(document.querySelector('#search-origin #search-bar-container')).not.toBeNull();
+    expect(document.getElementById('x-nav-search-host')).toBeNull();
   });
 });

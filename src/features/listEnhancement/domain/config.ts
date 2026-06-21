@@ -87,9 +87,9 @@ export function createDefaultListEnhancementConfig(): ListEnhancementConfig {
     treatSubscribedAsFavorited: true,
     listDisplayControl: {
       enabled: true,
-      columnCount: 4,
+      columnCount: 5,
       containerWidth: 100,
-      enableContainerExpansion: false,
+      enableContainerExpansion: true,
       enableWideLayout: true,
       enableSearchBarLayout: true,
     },

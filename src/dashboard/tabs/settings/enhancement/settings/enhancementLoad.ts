@@ -11,7 +11,7 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   const anchorOptimization = settings?.anchorOptimization || {};
   const listEnhancement = settings?.listEnhancement || {};
 
-  host.enableTranslation.checked = dataEnhancement?.enableTranslation || false;
+  host.enableTranslation.checked = dataEnhancement?.enableTranslation !== false;
   host.enableContentFilter.checked = userExperience?.enableContentFilter || false;
   host.enableMagnetSearch.checked = userExperience?.enableMagnetSearch || false;
   host.enableAnchorOptimization.checked = userExperience?.enableAnchorOptimization || false;
@@ -59,6 +59,9 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.replaceTitleWithTranslation) host.replaceTitleWithTranslation.checked = (listEnhancement as any).replaceTitleWithTranslation !== false;
   if (host.enableWideLayout) host.enableWideLayout.checked = (listEnhancement as any).listDisplayControl?.enableWideLayout !== false;
   if (host.enableSearchBarLayout) host.enableSearchBarLayout.checked = (listEnhancement as any).listDisplayControl?.enableSearchBarLayout !== false;
+  if (host.enableContainerExpansion) host.enableContainerExpansion.checked = (listEnhancement as any).listDisplayControl?.enableContainerExpansion !== false;
+  if (host.listColumnCount) host.listColumnCount.value = String((listEnhancement as any).listDisplayControl?.columnCount ?? 5);
+  if (host.listContainerWidth) host.listContainerWidth.value = String((listEnhancement as any).listDisplayControl?.containerWidth ?? 100);
   if (host.enableActorWatermark) host.enableActorWatermark.checked = (listEnhancement as any).enableActorWatermark === true;
   if (host.showStatusBadge) host.showStatusBadge.checked = (listEnhancement as any).showStatusBadge !== false;
   if (host.enableStatusQuickAction) host.enableStatusQuickAction.checked = (listEnhancement as any).enableStatusQuickAction === true;

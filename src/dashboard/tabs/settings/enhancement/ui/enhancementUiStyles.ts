@@ -36,7 +36,7 @@ export function handleContainerWidthChange(host: EnhancementUiStylesHost): void 
 export function updateContainerWidthMax(host: EnhancementUiStylesHost): void {
   if (!host.listContainerWidth || !host.listColumnCount) return;
 
-  const columnCount = parseInt(host.listColumnCount.value) || 4;
+  const columnCount = parseInt(host.listColumnCount.value) || 5;
   const enableContainerExpansion = host.enableContainerExpansion?.checked === true;
 
   let maxWidth: number;

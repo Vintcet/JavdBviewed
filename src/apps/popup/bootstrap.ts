@@ -612,9 +612,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 获取当前配置
         const control = settings.listEnhancement?.listDisplayControl || {
             enabled: true,
-            columnCount: 4,
+            columnCount: 5,
             containerWidth: 100,
-            enableContainerExpansion: false,
+            enableContainerExpansion: true,
         };
 
         console.log('[Popup] Initial list display control:', control);
@@ -695,9 +695,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!currentSettings.listEnhancement.listDisplayControl) {
                     currentSettings.listEnhancement.listDisplayControl = {
                         enabled: true,
-                        columnCount: 4,
+                        columnCount: 5,
                         containerWidth: 100,
-                        enableContainerExpansion: false
+                        enableContainerExpansion: true
                     };
                 }
                 currentSettings.listEnhancement.listDisplayControl.columnCount = count;
@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 输入框滚轮事件
         columnCountInput.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const currentValue = parseInt(columnCountInput.value) || 4;
+            const currentValue = parseInt(columnCountInput.value) || 5;
             const delta = e.deltaY > 0 ? -1 : 1; // 向下滚动减少，向上滚动增加
             const newValue = currentValue + delta;
             updateColumnCount(newValue);
@@ -792,9 +792,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!currentSettings.listEnhancement.listDisplayControl) {
                     currentSettings.listEnhancement.listDisplayControl = {
                         enabled: true,
-                        columnCount: 4,
+                        columnCount: 5,
                         containerWidth: 100,
-                        enableContainerExpansion: false
+                        enableContainerExpansion: true
                     };
                 }
                 currentSettings.listEnhancement.listDisplayControl.containerWidth = width;
@@ -824,7 +824,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('[Popup] Reset list display control to default');
                 
                 // 默认值：列数4，宽度100
-                const defaultColumnCount = 4;
+                const defaultColumnCount = 5;
                 const defaultContainerWidth = 100;
                 
                 // 更新UI
@@ -855,7 +855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         enabled: true,
                         columnCount: defaultColumnCount,
                         containerWidth: defaultContainerWidth,
-                        enableContainerExpansion: false
+                        enableContainerExpansion: true
                     };
                 } else {
                     currentSettings.listEnhancement.listDisplayControl.columnCount = defaultColumnCount;

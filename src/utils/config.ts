@@ -401,7 +401,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
     dataEnhancement: {
         enableMultiSource: false, // 仍未启用
         enableVideoPreview: true, // 启用：视频预览增强
-        enableTranslation: false,
+        enableTranslation: true,
     },
 
     // 新增：翻译服务默认配置
@@ -581,9 +581,9 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
         // 新增：列表页显示控制默认配置
         listDisplayControl: {
             enabled: true,
-            columnCount: 4,
+            columnCount: 5,
             containerWidth: 100,
-            enableContainerExpansion: false,
+            enableContainerExpansion: true,
             enableWideLayout: true,
             enableSearchBarLayout: true,
         },

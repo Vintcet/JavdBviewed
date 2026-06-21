@@ -89,8 +89,8 @@ describe('list enhancement helpers', () => {
     expect(result.styleContent).toContain('body .main-tabs');
     expect(result.styleContent).toContain('body .section-addition');
     expect(result.styleContent).toContain('margin-left: auto !important');
-    expect(result.styleContent).toContain('body #search-bar-container');
-    expect(result.styleContent).toContain('position: sticky');
+    expect(result.styleContent).toContain('body .navbar #x-nav-search-host');
+    expect(result.styleContent).toContain('data-x-nav-search');
   });
 
   it('matches actors from title suffix and weighted fallback candidates without duplicates', () => {

@@ -69,9 +69,9 @@ export function installContentMessageRouter(): void {
                         treatSubscribedAsFavorited: (settings.listEnhancement as any)?.treatSubscribedAsFavorited !== false,
                         listDisplayControl: {
                             enabled: (settings.listEnhancement as any)?.listDisplayControl?.enabled !== false,
-                            columnCount: (settings.listEnhancement as any)?.listDisplayControl?.columnCount || 4,
+                            columnCount: (settings.listEnhancement as any)?.listDisplayControl?.columnCount || 5,
                             containerWidth: (settings.listEnhancement as any)?.listDisplayControl?.containerWidth || 100,
-                            enableContainerExpansion: (settings.listEnhancement as any)?.listDisplayControl?.enableContainerExpansion === true,
+                            enableContainerExpansion: (settings.listEnhancement as any)?.listDisplayControl?.enableContainerExpansion !== false,
                             enableWideLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableWideLayout !== false,
                             enableSearchBarLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableSearchBarLayout !== false,
                         },

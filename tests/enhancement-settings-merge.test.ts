@@ -52,6 +52,8 @@ describe('mergeEnhancementSettingsForSave', () => {
 
     expect(defaultMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(true);
     expect(defaultMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(true);
+    expect(defaultMerged.listEnhancement?.listDisplayControl?.columnCount).toBe(5);
+    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableContainerExpansion).toBe(true);
     expect(disabledMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(false);
     expect(disabledMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(false);
   });

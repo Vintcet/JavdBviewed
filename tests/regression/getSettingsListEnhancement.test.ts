@@ -58,6 +58,7 @@ describe('getSettings listEnhancement regression', () => {
     expect(settings.listEnhancement.listDisplayControl.enabled).toBe(true);
     expect(settings.listEnhancement.listDisplayControl.columnCount).toBe(6);
     expect(settings.listEnhancement.listDisplayControl.containerWidth).toBe(100);
+    expect(settings.listEnhancement.listDisplayControl.enableContainerExpansion).toBe(true);
     expect(settings.listEnhancement.listDisplayControl.enableWideLayout).toBe(true);
     expect(settings.listEnhancement.listDisplayControl.enableSearchBarLayout).toBe(true);
     expect(settings.listEnhancement.enableVideoPreview).toBe(true);
@@ -65,5 +66,6 @@ describe('getSettings listEnhancement regression', () => {
     expect(settings.listEnhancement.enableTitleTranslation).toBe(true);
     expect(settings.listEnhancement.enableStatusQuickAction).toBe(false);
     expect(settings.listEnhancement.replaceTitleWithTranslation).toBe(true);
+    expect(settings.dataEnhancement.enableTranslation).toBe(true);
   });
 });
