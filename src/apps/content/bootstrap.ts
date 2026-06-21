@@ -458,6 +458,7 @@ async function initialize(): Promise<void> {
                     showFloatingButton: true,
                     autoSearch: magnetSearchConfig.autoSearch === true,
                     blockMojContent: magnetSearchConfig.blockMojContent !== false,
+                    enableQualityFilter: magnetSearchConfig.enableQualityFilter !== false,
                     sources: {
                         sukebei: sources.sukebei !== false,
                         btdig: sources.btdig !== false,

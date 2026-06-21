@@ -86,6 +86,7 @@ export class MagnetSearchManager {
   private sourceTagStates: Partial<Record<MagnetSourceKey, MagnetSourceSearchState>> = {};
   private sourceTagLatestResultCounts: Partial<Record<MagnetSourceKey, number>> = {};
   private sourceBackoffState: MagnetSourceBackoffState = {};
+  private magnetQualityFilterEnabled = true;
 
   constructor(config: Partial<MagnetSearchConfig> = {}) {
     this.config = {
@@ -94,6 +95,7 @@ export class MagnetSearchManager {
       showFloatingButton: true,
       autoSearch: false,
       blockMojContent: true,
+      enableQualityFilter: true,
       sources: {
         sukebei: true,
         btdig: true,
@@ -106,6 +108,7 @@ export class MagnetSearchManager {
       timeout: 15000, // 增加超时时间
       ...config,
     };
+    this.magnetQualityFilterEnabled = this.config.enableQualityFilter !== false;
   }
 
   private clampMagnetContainerWidth(): void {
@@ -955,6 +958,7 @@ export class MagnetSearchManager {
       }
       magnetContent.innerHTML = '';
       log('Cleared existing magnet list');
+      this.renderMagnetQualityFilterBar(magnetContent);
       this.renderMagnetSourceFilterBar(magnetContent);
       magnetContent.appendChild(fragment);
       this.renderMagnetPaginationControls(magnetContent, pagination, results.length);
@@ -1006,9 +1010,25 @@ export class MagnetSearchManager {
     return source.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
+  private isHighValueMagnet(result: MagnetResult): boolean {
+    const name = result.name.toLowerCase();
+    return result.hasSubtitle
+      || /4k|2160p/.test(name)
+      || result.quality?.toLowerCase() === '4k'
+      || isCrackedVersion(result.name)
+      || /(^|[-_\s])(c|u|uc)([-_\s.]|$)/i.test(result.name);
+  }
+
+  private getQualityFilteredMagnetResults(results: MagnetResult[]): MagnetResult[] {
+    if (!this.magnetQualityFilterEnabled) return results;
+    const highValueResults = results.filter(result => this.isHighValueMagnet(result));
+    return highValueResults.length > 0 ? highValueResults : results;
+  }
+
   private getFilteredMagnetResults(results = this.currentMagnetResults): MagnetResult[] {
-    if (this.currentMagnetSourceFilter === 'all') return results;
-    return results.filter((result) => getResultSources(result)
+    const qualityFiltered = this.getQualityFilteredMagnetResults(results);
+    if (this.currentMagnetSourceFilter === 'all') return qualityFiltered;
+    return qualityFiltered.filter((result) => getResultSources(result)
       .some(source => this.normalizeMagnetSourceFilter(source) === this.currentMagnetSourceFilter));
   }
 
@@ -1062,6 +1082,32 @@ export class MagnetSearchManager {
     container.appendChild(bar);
   }
 
+  private renderMagnetQualityFilterBar(container: Element): void {
+    if (this.currentMagnetResults.length === 0) return;
+    const highValueCount = this.currentMagnetResults.filter(result => this.isHighValueMagnet(result)).length;
+    if (highValueCount === 0 || highValueCount === this.currentMagnetResults.length) return;
+
+    const bar = document.createElement('div');
+    bar.className = 'jdb-magnet-quality-filter-bar';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `jdb-magnet-quality-filter${this.magnetQualityFilterEnabled ? ' is-active' : ''}`;
+    button.textContent = this.magnetQualityFilterEnabled
+      ? `优质过滤 ${highValueCount}/${this.currentMagnetResults.length}`
+      : `显示全部 ${this.currentMagnetResults.length}`;
+    button.addEventListener('click', () => {
+      this.magnetQualityFilterEnabled = !this.magnetQualityFilterEnabled;
+      this.currentMagnetPage = 1;
+      this.currentMagnetDisplayResults = this.getFilteredMagnetResults();
+      this.displayAllMagnets(this.currentMagnetDisplayResults, true);
+      this.updateTotalCount(this.currentMagnetDisplayResults.length);
+    });
+
+    bar.appendChild(button);
+    container.appendChild(bar);
+  }
+
   private applyNativeMagnetPresentation(page = this.nativeMagnetPage): void {
     const container = document.querySelector('#magnets-content');
     if (!container) return;
@@ -1071,14 +1117,23 @@ export class MagnetSearchManager {
 
     this.addUnifiedMagnetStyles();
     container.querySelector('.jdb-native-magnet-pagination')?.remove();
+    container.querySelector('.jdb-native-magnet-quality-filter')?.remove();
 
-    const pagination = buildMagnetPaginationState(rows.length, page);
+    rows.forEach(row => this.decorateNativeMagnetRow(row));
+    const highValueRows = rows.filter(row => row.classList.contains('jdb-magnet-high-value'));
+    const filteredRows = this.magnetQualityFilterEnabled && highValueRows.length > 0 ? highValueRows : rows;
+
+    this.renderNativeMagnetQualityFilter(container, rows.length, highValueRows.length);
+
+    const pagination = buildMagnetPaginationState(filteredRows.length, page);
     this.nativeMagnetPage = pagination.currentPage;
 
     rows.forEach((row, index) => {
-      this.decorateNativeMagnetRow(row);
-      const isVisible = index >= pagination.startIndex && index < pagination.endIndex;
+      const filteredIndex = filteredRows.indexOf(row);
+      const isFilteredOut = filteredIndex < 0;
+      const isVisible = !isFilteredOut && filteredIndex >= pagination.startIndex && filteredIndex < pagination.endIndex;
       row.classList.toggle('jdb-magnet-page-hidden', !isVisible);
+      row.classList.toggle('jdb-magnet-quality-hidden', isFilteredOut);
       row.style.display = '';
     });
 
@@ -1111,6 +1166,27 @@ export class MagnetSearchManager {
     container.appendChild(controls);
   }
 
+  private renderNativeMagnetQualityFilter(container: Element, total: number, highValueCount: number): void {
+    if (highValueCount === 0 || highValueCount === total) return;
+
+    const bar = document.createElement('div');
+    bar.className = 'jdb-magnet-quality-filter-bar jdb-native-magnet-quality-filter';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `jdb-magnet-quality-filter${this.magnetQualityFilterEnabled ? ' is-active' : ''}`;
+    button.textContent = this.magnetQualityFilterEnabled
+      ? `优质过滤 ${highValueCount}/${total}`
+      : `显示全部 ${total}`;
+    button.addEventListener('click', () => {
+      this.magnetQualityFilterEnabled = !this.magnetQualityFilterEnabled;
+      this.applyNativeMagnetPresentation(1);
+    });
+
+    bar.appendChild(button);
+    container.prepend(bar);
+  }
+
   private decorateNativeMagnetRow(row: HTMLElement): void {
     row.classList.add('jdb-magnet-row', 'jdb-native-magnet-row', 'privacy-protected');
     row.setAttribute('data-privacy-protected', 'true');
@@ -1125,6 +1201,7 @@ export class MagnetSearchManager {
     const name = row.querySelector<HTMLElement>('.magnet-name .name');
     name?.classList.add('jdb-magnet-title', 'privacy-protected');
     name?.setAttribute('data-privacy-protected', 'true');
+    const nameText = name?.textContent || '';
 
     const meta = row.querySelector<HTMLElement>('.magnet-name .meta');
     meta?.classList.add('jdb-magnet-meta');
@@ -1142,6 +1219,14 @@ export class MagnetSearchManager {
       sourceTag.textContent = 'JavDB';
       tags.prepend(sourceTag);
     }
+
+    const tagsText = tags?.textContent || '';
+    const highValue = /4k|2160p|(^|[-_\s])(c|u|uc)([-_\s.]|$)/i.test(nameText)
+      || /字幕|中字|中文|破解|无码|無碼/i.test(`${nameText} ${tagsText}`);
+    row.classList.toggle('jdb-magnet-high-value', highValue);
+    if (/4k|2160p/i.test(nameText)) {
+      name?.classList.add('jdb-magnet-title-4k');
+    }
   }
 
   /**
@@ -1158,6 +1243,9 @@ export class MagnetSearchManager {
     item.className = `item is-desktop jdb-magnet-row ${index % 2 === 0 ? '' : 'odd'} privacy-protected`;
     if (result.source !== 'JavDB') {
       item.classList.add('is-external-source');
+    }
+    if (this.isHighValueMagnet(result)) {
+      item.classList.add('jdb-magnet-high-value');
     }
     item.setAttribute('data-privacy-protected', 'true');
     item.setAttribute('data-source', result.source);
@@ -1180,6 +1268,9 @@ export class MagnetSearchManager {
 
     const nameSpan = document.createElement('span');
     nameSpan.className = 'name jdb-magnet-title privacy-protected';
+    if (/4k|2160p/i.test(result.name) || result.quality?.toLowerCase() === '4k') {
+      nameSpan.classList.add('jdb-magnet-title-4k');
+    }
     nameSpan.setAttribute('data-privacy-protected', 'true');
     nameSpan.textContent = result.name;
     nameSpan.style.display = 'block';
@@ -1832,6 +1923,40 @@ export class MagnetSearchManager {
         background: var(--jdb-magnet-card-bg);
       }
 
+      #magnets-content .jdb-magnet-quality-hidden,
+      #magnets-content .jdb-magnet-page-hidden {
+        display: none !important;
+      }
+
+      #magnets-content .jdb-magnet-title-4k {
+        color: #ff4d1f !important;
+        font-weight: 800;
+      }
+
+      #magnets-content .jdb-magnet-quality-filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px 0;
+      }
+
+      #magnets-content .jdb-magnet-quality-filter {
+        height: 28px;
+        padding: 0 10px;
+        border: 0;
+        border-radius: 999px;
+        color: var(--jdb-magnet-meta-muted);
+        background: rgba(148, 163, 184, 0.14);
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      #magnets-content .jdb-magnet-quality-filter.is-active {
+        color: #166534;
+        background: #dcfce7;
+      }
+
       #magnets-content .jdb-native-magnet-row,
       #magnets-content > .item.columns.is-desktop.jdb-native-magnet-row {
         gap: 10px;
@@ -2414,6 +2539,9 @@ export class MagnetSearchManager {
    */
   updateConfig(newConfig: Partial<MagnetSearchConfig>): void {
     this.config = { ...this.config, ...newConfig };
+    if (typeof newConfig.enableQualityFilter === 'boolean') {
+      this.magnetQualityFilterEnabled = newConfig.enableQualityFilter;
+    }
   }
 
   /**

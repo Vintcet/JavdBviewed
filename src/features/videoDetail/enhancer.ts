@@ -1,7 +1,7 @@
 // 视频详情页增强功能
 
 import { defaultDataAggregator } from '../dataAggregator';
-import { aiService } from '../ai';
+import { TranslatorService, DEFAULT_TRANSLATOR_CONFIG } from '../dataAggregator/sources/translator';
 import { showToast } from '../../platform/browser/toast';
 import { VideoMetadata, ImageData } from '../dataAggregator/types';
 import { STATE, log } from '../contentState';
@@ -31,6 +31,58 @@ import {
 } from '../previews';
 
 const RELATED_LISTS_PAGE_SIZE = 10;
+const DETAIL_TITLE_CACHE_PREFIX = 'jdb_detail_title_translation_v1:';
+const JHS_TRANSLATE_CACHE_KEY = 'jhs_translate';
+const DETAIL_TITLE_ORIGINAL_ATTR = 'data-jdb-original-title';
+const DETAIL_TITLE_TRANSLATED_ATTR = 'data-jdb-translated-title';
+const DETAIL_TITLE_MODE_ATTR = 'data-jdb-title-translation-mode';
+const TITLE_TRANSLATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+const detailTitleTranslator = new TranslatorService({
+  ...DEFAULT_TRANSLATOR_CONFIG,
+  timeout: 4000,
+  maxRetries: 1,
+});
+
+function normalizeTitleText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function needsTitleTranslation(text: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(text);
+}
+
+function hashTitleText(text: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function readJhsTitleCache(videoId?: string | null): string | null {
+  if (!videoId) return null;
+  try {
+    const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const cached = parsed?.[videoId];
+    return typeof cached === 'string' && cached.trim() ? normalizeTitleText(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJhsTitleCache(videoId: string | null | undefined, translated: string): void {
+  if (!videoId) return;
+  try {
+    const raw = localStorage.getItem(JHS_TRANSLATE_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+    parsed[videoId] = translated;
+    localStorage.setItem(JHS_TRANSLATE_CACHE_KEY, JSON.stringify(parsed));
+  } catch {}
+}
 
 export interface EnhancementOptions {
   enableCoverImage: boolean;
@@ -50,7 +102,6 @@ export class VideoDetailEnhancer {
   private enhancedData: VideoMetadata | null = null;
   private options: EnhancementOptions;
   private translationCache = new Map<string, { translated: string; ts: number }>();
-  private static readonly TITLE_TRANSLATION_TTL_MS = 24 * 60 * 60 * 1000;
   private coreInitialized = false;
   private coreInitializedForVideoId: string | null = null;
   // 🆕 视频预览相关属性
@@ -65,7 +116,7 @@ export class VideoDetailEnhancer {
       showLoadingIndicator: true,
       enableReviewBreaker: true,
       enableFC2Breaker: true,
-      enableReviewEnhancement: false,
+      enableReviewEnhancement: true,
       enableReviewMagnetLinkify: true,
       enableReviewPush115: true,
       enableRelatedLists: true,
@@ -93,9 +144,9 @@ export class VideoDetailEnhancer {
       this.options.enableCoverImage = cfg.enableCoverImage !== false;
       this.options.enableTranslation = cfg.enableTranslation !== false;
       this.options.showLoadingIndicator = cfg.showLoadingIndicator !== false;
-      this.options.enableReviewBreaker = cfg.enableReviewBreaker === true;
+      this.options.enableReviewBreaker = cfg.enableReviewBreaker !== false;
       this.options.enableFC2Breaker = cfg.enableFC2Breaker === true;
-      this.options.enableReviewEnhancement = cfg.enableReviewEnhancement === true;
+      this.options.enableReviewEnhancement = cfg.enableReviewEnhancement !== false;
       this.options.enableReviewMagnetLinkify = cfg.enableReviewMagnetLinkify !== false;
       this.options.enableReviewPush115 = cfg.enableReviewPush115 !== false;
       this.options.enableRelatedLists = (cfg as any).enableRelatedLists !== false;
@@ -106,10 +157,24 @@ export class VideoDetailEnhancer {
   }
 
   private applyTranslatedTitle(titleEl: HTMLElement, original: string, translated: string, mode: string): void {
+    const existingOriginal = titleEl.getAttribute(DETAIL_TITLE_ORIGINAL_ATTR);
+    if (existingOriginal && titleEl.textContent?.trim() !== existingOriginal) {
+      titleEl.textContent = existingOriginal;
+    }
+
+    titleEl.setAttribute(DETAIL_TITLE_ORIGINAL_ATTR, original);
+    titleEl.setAttribute(DETAIL_TITLE_TRANSLATED_ATTR, translated);
+    titleEl.setAttribute(DETAIL_TITLE_MODE_ATTR, mode);
+
     if (mode === 'replace') {
       titleEl.textContent = translated;
+      titleEl.setAttribute('title', original);
+      titleEl.parentElement?.querySelector('.enhanced-translation')?.remove();
       return;
     }
+
+    titleEl.textContent = original;
+    titleEl.setAttribute('title', translated);
     const dark = isDarkTheme();
     const existing = titleEl.parentElement?.querySelector('.enhanced-translation') as HTMLElement | null;
     if (existing) {
@@ -139,9 +204,9 @@ export class VideoDetailEnhancer {
   private async translateCurrentTitleIfNeeded(): Promise<void> {
     try {
       const settings = STATE.settings;
-      const enabledByGlobal = !!settings?.dataEnhancement?.enableTranslation;
-      if (!enabledByGlobal) return;
-      console.log('[Translation] Enable check (global only):', { enabledByGlobal });
+      const enabledByGlobal = settings?.dataEnhancement?.enableTranslation === true;
+      const enabledByVideo = settings?.videoEnhancement?.enableTranslation !== false;
+      if (!enabledByGlobal || !enabledByVideo) return;
 
       // 当 targets 未配置时，默认启用 currentTitle 翻译；只有明确为 false 才禁用
       const targetEnabled = settings.translation?.targets
@@ -168,52 +233,27 @@ export class VideoDetailEnhancer {
         return;
       }
 
-      const original = titleEl.textContent?.trim() || '';
-      if (!original) return;
+      const original = normalizeTitleText(titleEl.getAttribute(DETAIL_TITLE_ORIGINAL_ATTR) || titleEl.textContent || '');
+      if (!original || !needsTitleTranslation(original)) return;
 
-      // 根据 provider 选择翻译方式（AI 前置校验：是否启用且选择了模型）
-      const provider = settings.translation?.provider || 'traditional';
-      console.log('[Translation] Provider selected:', provider, 'Original text:', original);
-      console.log('[Translation] Translation settings:', settings.translation);
-      console.log('[Translation] Data enhancement settings:', settings.dataEnhancement);
-      
-      if (provider === 'ai') {
-        const ai = aiService.getSettings();
-        console.log('[Translation] AI settings check:', {
-          enabled: ai.enabled,
-          hasApiKey: !!ai.apiKey,
-          selectedModel: ai.selectedModel
-        });
-        
-        if (!ai.enabled) {
-          console.error('[Translation] AI service not enabled');
-          showToast('标题翻译失败：AI 功能未启用，请在"AI 设置"中开启', 'error');
-          return;
-        }
-        if (!ai.apiKey) {
-          console.error('[Translation] No API key configured');
-          showToast('标题翻译失败：未配置 API Key，请在"AI 设置"中填写', 'error');
-          return;
-        }
-        if (!ai.selectedModel) {
-          console.error('[Translation] No model selected');
-          showToast('标题翻译失败：未选择模型，请在"AI 设置"中选择模型', 'error');
-          return;
-        }
-        console.log('[Translation] AI validation passed, proceeding with translation');
-      }
-
-      const cacheKey = `${provider}:${original}`;
-      const cached = this.translationCache.get(cacheKey);
-      if (cached && Date.now() - cached.ts < VideoDetailEnhancer.TITLE_TRANSLATION_TTL_MS) {
-        const mode = settings.translation?.displayMode || 'append';
-        this.applyTranslatedTitle(titleEl, original, cached.translated, mode);
+      const mode = settings.translation?.displayMode || 'append';
+      const existingMode = titleEl.getAttribute(DETAIL_TITLE_MODE_ATTR);
+      const existingTranslated = titleEl.getAttribute(DETAIL_TITLE_TRANSLATED_ATTR);
+      if (existingTranslated && existingMode === mode) {
+        this.applyTranslatedTitle(titleEl, original, existingTranslated, mode);
         return;
       }
 
-      const existingTranslation = titleEl.parentElement?.querySelector('.enhanced-translation');
-      if (existingTranslation && existingTranslation.getAttribute('data-translation-state') !== 'pending') {
-        log('[Translation] existing translated title found, skip duplicate render.');
+      const jhsCached = readJhsTitleCache(this.videoId);
+      if (jhsCached) {
+        this.applyTranslatedTitle(titleEl, original, jhsCached, mode);
+        return;
+      }
+
+      const cacheKey = `${DETAIL_TITLE_CACHE_PREFIX}${hashTitleText(original)}`;
+      const cached = this.translationCache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < TITLE_TRANSLATION_TTL_MS) {
+        this.applyTranslatedTitle(titleEl, original, cached.translated, mode);
         return;
       }
 
@@ -226,12 +266,7 @@ export class VideoDetailEnhancer {
         status: 'done',
         durationMs: 0,
       });
-      console.log('[Translation] Calling translation service...');
-      const resp = provider === 'ai'
-        ? await defaultDataAggregator.translateTextWithAI(original)
-        : await defaultDataAggregator.translateText(original);
-
-      console.log('[Translation] Translation response:', resp);
+      const resp = await detailTitleTranslator.translate(original);
 
       if (!resp.success || !resp.data?.translatedText) {
         const reason = resp.error || '翻译失败';
@@ -239,19 +274,19 @@ export class VideoDetailEnhancer {
         showToast(`标题翻译失败：${reason}`, 'error');
         return;
       }
-      const translated = resp.data.translatedText;
+      const translated = normalizeTitleText(resp.data.translatedText);
+      if (!translated || translated === original) return;
       this.translationCache.set(cacheKey, { translated, ts: Date.now() });
+      writeJhsTitleCache(this.videoId, translated);
       // 控制台输出：显示使用的提供方与引擎/模型，以及原文与译文，方便确认来源
       try {
-        const engine = resp.data.service || provider;
+        const engine = resp.data.service || 'google';
         // 单行可读输出，避免只显示 "Object" 的情况
         console.log(
-          `[Title Translation] provider=${provider} engine=${engine} source=${resp.source} cached=${resp.cached === true} original="${original}" translated="${translated}"`
+          `[Title Translation] provider=google engine=${engine} source=${resp.source} cached=${resp.cached === true} original="${original}" translated="${translated}"`
         );
       } catch {}
 
-      // 显示方式：append（保留原文，追加显示）或 replace（替换原文）
-      const mode = settings.translation?.displayMode || 'append';
       await yieldToMainThread(0);
       saveSubtaskDetail({
         label: 'videoEnhancement:translateCurrentTitle:render',
@@ -381,36 +416,22 @@ export class VideoDetailEnhancer {
         font-weight: bold;
       `;
 
-      const linkColor = dark ? '#64b5f6' : '#1976d2';
-      const linkHover = dark ? '#90caf9' : '#0d47a1';
       const btn = document.createElement('div');
       btn.setAttribute('data-translation-content', '');
-      btn.textContent = '点击翻译';
+      btn.textContent = '翻译中...';
       btn.style.cssText = `
         font-size: 14px;
-        color: ${linkColor};
-        cursor: pointer;
+        color: ${dark ? '#aaa' : '#666'};
+        cursor: default;
         display: inline-block;
         padding: 2px 0;
-        border-bottom: 1px dashed ${linkColor};
         line-height: 1.4;
       `;
-      btn.onmouseenter = () => { btn.style.color = linkHover; btn.style.borderBottomColor = linkHover; };
-      btn.onmouseleave = () => { btn.style.color = linkColor; btn.style.borderBottomColor = linkColor; };
-      btn.onclick = async () => {
-        btn.textContent = '翻译中...';
-        btn.style.cursor = 'default';
-        btn.style.color = dark ? '#666' : '#999';
-        btn.style.borderBottomColor = dark ? '#666' : '#999';
-        btn.onclick = null;
-        btn.onmouseenter = null;
-        btn.onmouseleave = null;
-        await this.runCurrentTitleTranslation();
-      };
 
       container.appendChild(label);
       container.appendChild(btn);
       titleEl.parentElement?.insertBefore(container, titleEl.nextSibling);
+      await this.runCurrentTitleTranslation();
     } catch (error) {
       log('Error inserting translation placeholder:', error);
     }
@@ -684,6 +705,13 @@ export class VideoDetailEnhancer {
       }
       log(`[ReviewBreaker] Extracted movieId from URL: ${movieId}`);
 
+      const inlineReviewsRoot = await this.ensureReviewsBelowMagnets();
+      if (inlineReviewsRoot && inlineReviewsRoot.getAttribute('data-jdb-review-auto-loaded') !== 'true') {
+        inlineReviewsRoot.setAttribute('data-jdb-review-auto-loaded', 'true');
+        await this.processReviewBreaking(inlineReviewsRoot, movieId, { force: true });
+        return;
+      }
+
       // 先监听短评标签的点击事件，点击时立即显示加载提示
       const reviewTab = document.querySelector([
         '.movie-panel-info a[data-movie-tab-target="reviews"]',
@@ -719,7 +747,7 @@ export class VideoDetailEnhancer {
                 log('[ReviewBreaker] Native #reviews container not found, skip.');
                 return;
               }
-              await this.processReviewBreaking(reviewsRoot, movieId);
+              await this.processReviewBreaking(reviewsRoot, movieId, { force: true });
             } finally {
               (window as any)[runFlag] = false;
             }
@@ -1471,7 +1499,46 @@ export class VideoDetailEnhancer {
   /**
    * 处理评论破解逻辑
    */
-  private async processReviewBreaking(reviewsRoot: HTMLElement, movieId: string): Promise<void> {
+  private async ensureReviewsBelowMagnets(): Promise<HTMLElement | null> {
+    const magnetsContent = await this.waitForElement('#magnets-content', 6000, 200) as HTMLElement | null;
+    if (!magnetsContent) return null;
+
+    const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
+    const insertAfter = magnetPanel || magnetsContent;
+    let reviewsRoot = document.querySelector('div[data-movie-tab-target="reviews"], #reviews') as HTMLElement | null;
+
+    if (!reviewsRoot) {
+      reviewsRoot = document.createElement('div');
+      reviewsRoot.id = 'reviews';
+      reviewsRoot.setAttribute('data-movie-tab-target', 'reviews');
+      reviewsRoot.className = 'message video-panel jdb-review-inline-panel';
+
+      const body = document.createElement('div');
+      body.className = 'message-body';
+      const list = document.createElement('dl');
+      list.className = 'review-items';
+      body.appendChild(list);
+      reviewsRoot.appendChild(body);
+    }
+
+    reviewsRoot.classList.remove('is-hidden');
+    reviewsRoot.classList.add('jdb-review-inline-panel', 'is-active');
+    reviewsRoot.removeAttribute('hidden');
+    reviewsRoot.setAttribute('aria-hidden', 'false');
+    reviewsRoot.style.display = 'block';
+
+    if (insertAfter.parentElement && reviewsRoot.previousElementSibling !== insertAfter) {
+      insertAfter.insertAdjacentElement('afterend', reviewsRoot);
+    }
+
+    return reviewsRoot;
+  }
+
+  private async processReviewBreaking(
+    reviewsRoot: HTMLElement,
+    movieId: string,
+    options: { force?: boolean } = {},
+  ): Promise<void> {
     try {
       // 检查是否需要破解：
       // 1. 查找评论总数（从tab标签中提取）
@@ -1489,7 +1556,7 @@ export class VideoDetailEnhancer {
       log(`[ReviewBreaker] Review stats: total=${totalCount}, displayed=${displayedCount}, hasVipPrompt=${!!hasVipPrompt}`);
       
       // 如果显示的评论数量等于总数，且没有VIP提示，说明已经全部显示，跳过
-      if (displayedCount >= totalCount && !hasVipPrompt) {
+      if (!options.force && displayedCount >= totalCount && !hasVipPrompt) {
         log('[ReviewBreaker] All reviews are already displayed, skip API fetch.');
         return;
       }
@@ -1497,7 +1564,7 @@ export class VideoDetailEnhancer {
       // 如果评论数量<=3且有VIP提示，说明需要破解
       if (displayedCount <= 3 && hasVipPrompt) {
         log('[ReviewBreaker] VIP-locked reviews detected, fetching from API...');
-      } else if (displayedCount < totalCount) {
+      } else if (displayedCount < totalCount || options.force) {
         log('[ReviewBreaker] Partial reviews displayed, fetching complete list from API...');
       } else {
         log('[ReviewBreaker] No need to fetch, all reviews visible.');
@@ -1969,6 +2036,15 @@ export class VideoDetailEnhancer {
         --jdb-review-star: #f59e0b;
       }
 
+      .jdb-review-inline-panel {
+        margin-top: 16px !important;
+        margin-bottom: 20px !important;
+      }
+
+      .jdb-review-inline-panel.message {
+        background: transparent !important;
+      }
+
       html[data-theme="dark"] #reviews,
       html[data-theme="dark"] div[data-movie-tab-target="reviews"] {
         --jdb-review-panel-bg: #111827;
@@ -2018,7 +2094,7 @@ export class VideoDetailEnhancer {
         gap: 5px 8px;
         margin-bottom: 6px;
         color: var(--jdb-review-title);
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 750;
         line-height: 1.3;
       }
@@ -2118,8 +2194,8 @@ export class VideoDetailEnhancer {
       div[data-movie-tab-target="reviews"] .review-item .content p {
         margin: 0;
         color: var(--jdb-review-text);
-        font-size: 13px;
-        line-height: 1.5;
+        font-size: 15px;
+        line-height: 1.65;
         white-space: pre-wrap;
         word-break: break-word;
       }

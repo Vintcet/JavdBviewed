@@ -423,7 +423,7 @@ export function getVideoDetailTaskBlueprints(settings: any): VideoDetailTaskBlue
         blueprints.push({ phase: 'idle', label: 'actorRemarks:run', timeout: actorRemarksTaskTimeoutMs, dependsOn: ['videoStatus:initialSync'] });
     }
 
-    if (enableVideoEnhancement && (settings as any)?.videoEnhancement?.enableReviewBreaker === true) {
+    if ((settings as any)?.videoEnhancement?.enableReviewBreaker !== false) {
         blueprints.push({ phase: 'idle', label: 'videoEnhancement:runReviewBreaker', dependsOn: ['videoStatus:initialSync'] });
     }
 
@@ -665,7 +665,7 @@ export async function handleVideoDetailPage(): Promise<void> {
                 enableCurrentTitleTranslation: STATE.settings?.dataEnhancement?.enableTranslation && (STATE.settings?.translation?.targets ? STATE.settings.translation.targets.currentTitle !== false : true),
                 enableActorNameMarks: (STATE.settings as any)?.videoEnhancement?.enableActorNameMarks !== false,
                 enableActorRemarks: (STATE.settings as any)?.videoEnhancement?.enableActorRemarks === true,
-                enableReviewBreaker: (STATE.settings as any)?.videoEnhancement?.enableReviewBreaker === true,
+                enableReviewBreaker: (STATE.settings as any)?.videoEnhancement?.enableReviewBreaker !== false,
                 enableRelatedLists: (STATE.settings as any)?.videoEnhancement?.enabled === true
                     && (STATE.settings as any)?.videoEnhancement?.enableRelatedLists !== false,
                 enableVideoFavoriteRating: (STATE.settings as any)?.videoEnhancement?.enableVideoFavoriteRating === true,
@@ -734,7 +734,7 @@ export async function handleVideoDetailPage(): Promise<void> {
                 dependsOn: ['videoEnhancement:runCover', 'videoEnhancement:runTitle', 'videoEnhancement:loadData'],
             });
 
-            if ((STATE.settings as any)?.videoEnhancement?.enableReviewBreaker === true) {
+            if ((STATE.settings as any)?.videoEnhancement?.enableReviewBreaker !== false) {
                 initOrchestrator.add('idle', async () => {
                     await videoDetailEnhancer.runReviewBreaker();
                 }, {

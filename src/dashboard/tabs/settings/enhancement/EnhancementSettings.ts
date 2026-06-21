@@ -90,6 +90,7 @@ export class EnhancementSettings extends BaseSettingsPanel {
     private magnetSourceJavbus!: HTMLInputElement;
     private magnetBlockMojContent!: HTMLInputElement;
     private magnetAutoSearch!: HTMLInputElement;
+    private magnetEnableQualityFilter!: HTMLInputElement;
     // 磁力搜索并发与限流配置
     private magnetPageMaxConcurrentRequests!: HTMLInputElement;
     private magnetBgGlobalMaxConcurrent!: HTMLInputElement;
@@ -749,6 +750,7 @@ export class EnhancementSettings extends BaseSettingsPanel {
                     },
                     blockMojContent: this.magnetBlockMojContent?.checked !== false,
                     autoSearch: this.magnetAutoSearch?.checked === true,
+                    enableQualityFilter: this.magnetEnableQualityFilter?.checked !== false,
                     maxResults: (STATE.settings?.magnetSearch as any)?.maxResults ?? 15,
                     timeoutMs: (STATE.settings?.magnetSearch as any)?.timeoutMs ?? 6000,
                     concurrency: {
@@ -771,8 +773,8 @@ export class EnhancementSettings extends BaseSettingsPanel {
                     // 与"翻译"总开关保持一致，避免两处状态不一致
                     enableTranslation: this.enableTranslation?.checked === true,
                     showLoadingIndicator: this.veShowLoadingIndicator?.checked !== false,
-                    enableReviewEnhancement: this.veEnableReviewEnhancement?.checked === true,
-                    enableReviewBreaker: this.veEnableReviewBreaker?.checked === true,
+                    enableReviewEnhancement: this.veEnableReviewEnhancement?.checked !== false,
+                    enableReviewBreaker: this.veEnableReviewBreaker?.checked !== false,
                     enableFC2Breaker: this.veEnableFC2Breaker?.checked === true,
                     enableReviewMagnetLinkify: this.veEnableReviewMagnetLinkify?.checked !== false,
                     enableReviewPush115: this.veEnableReviewPush115?.checked !== false,

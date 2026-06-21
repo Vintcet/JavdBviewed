@@ -134,6 +134,19 @@ describe('mergeEnhancementSettingsForSave', () => {
     expect(disabledMerged.videoEnhancement?.enableExternalSearch).toBe(false);
   });
 
+  it('keeps detail review enhancement defaults on', () => {
+    const current = structuredClone(DEFAULT_SETTINGS);
+
+    expect(current.videoEnhancement?.enableReviewEnhancement).toBe(true);
+    expect(current.videoEnhancement?.enableReviewBreaker).toBe(true);
+  });
+
+  it('keeps magnet quality filtering on by default', () => {
+    const current = structuredClone(DEFAULT_SETTINGS);
+
+    expect((current as any).magnetSearch?.enableQualityFilter).toBe(true);
+  });
+
   it('persists online availability site enabled states from checkbox controls', () => {
     const current = structuredClone(DEFAULT_SETTINGS);
 

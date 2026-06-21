@@ -21,6 +21,7 @@ export interface MagnetSearchConfig {
   showFloatingButton: boolean;
   autoSearch: boolean;
   blockMojContent: boolean;
+  enableQualityFilter: boolean;
   sources: {
     sukebei: boolean;
     btdig: boolean;

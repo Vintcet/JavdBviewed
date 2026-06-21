@@ -33,6 +33,7 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.magnetSourceJavbus) host.magnetSourceJavbus.checked = !!msSources.javbus;
   if (host.magnetBlockMojContent) host.magnetBlockMojContent.checked = magnetSearch.blockMojContent !== false;
   if (host.magnetAutoSearch) host.magnetAutoSearch.checked = magnetSearch.autoSearch === true;
+  if (host.magnetEnableQualityFilter) host.magnetEnableQualityFilter.checked = magnetSearch.enableQualityFilter !== false;
 
   const cc = (magnetSearch.concurrency || {}) as any;
   if (host.magnetPageMaxConcurrentRequests) host.magnetPageMaxConcurrentRequests.value = String(typeof cc.pageMaxConcurrentRequests === 'number' ? cc.pageMaxConcurrentRequests : 2);
@@ -88,8 +89,8 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.enableVideoEnhancement) host.enableVideoEnhancement.checked = !!(ve as any).enabled;
   if (host.veEnableCoverImage) host.veEnableCoverImage.checked = (ve as any).enableCoverImage !== false;
   if (host.veShowLoadingIndicator) host.veShowLoadingIndicator.checked = (ve as any).showLoadingIndicator !== false;
-  if (host.veEnableReviewEnhancement) host.veEnableReviewEnhancement.checked = (ve as any).enableReviewEnhancement === true;
-  if (host.veEnableReviewBreaker) host.veEnableReviewBreaker.checked = (ve as any).enableReviewBreaker === true;
+  if (host.veEnableReviewEnhancement) host.veEnableReviewEnhancement.checked = (ve as any).enableReviewEnhancement !== false;
+  if (host.veEnableReviewBreaker) host.veEnableReviewBreaker.checked = (ve as any).enableReviewBreaker !== false;
   if (host.veEnableFC2Breaker) host.veEnableFC2Breaker.checked = (ve as any).enableFC2Breaker === true;
   if (host.veEnableReviewMagnetLinkify) host.veEnableReviewMagnetLinkify.checked = (ve as any).enableReviewMagnetLinkify !== false;
   if (host.veEnableReviewPush115) host.veEnableReviewPush115.checked = (ve as any).enableReviewPush115 !== false;

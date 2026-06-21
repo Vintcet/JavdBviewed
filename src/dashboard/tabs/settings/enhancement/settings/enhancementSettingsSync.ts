@@ -33,6 +33,9 @@ export function doGetSettings(host: EnhancementSettingsSyncHost): Partial<Extens
         javbus: host.magnetSourceJavbus?.checked === true,
         custom: [],
       },
+      blockMojContent: host.magnetBlockMojContent?.checked !== false,
+      autoSearch: host.magnetAutoSearch?.checked === true,
+      enableQualityFilter: host.magnetEnableQualityFilter?.checked !== false,
     } as any,
     videoEnhancement: {
       enableRelatedLists: host.veEnableRelatedLists?.checked !== false,
@@ -71,6 +74,13 @@ export function doSetSettings(host: EnhancementSettingsSyncHost, settings: Parti
       if (host.enableActorEnhancement && typeof ux.enableActorEnhancement === 'boolean') host.enableActorEnhancement.checked = ux.enableActorEnhancement;
       if (host.enablePasswordHelper && typeof ux.enablePasswordHelper === 'boolean') host.enablePasswordHelper.checked = ux.enablePasswordHelper;
       if (host.enableSuperRanking) host.enableSuperRanking.checked = ux.enableSuperRanking !== false;
+    }
+
+    if ((settings as any).magnetSearch) {
+      const magnetSearch = (settings as any).magnetSearch;
+      if (host.magnetBlockMojContent && typeof magnetSearch.blockMojContent === 'boolean') host.magnetBlockMojContent.checked = magnetSearch.blockMojContent;
+      if (host.magnetAutoSearch && typeof magnetSearch.autoSearch === 'boolean') host.magnetAutoSearch.checked = magnetSearch.autoSearch;
+      if (host.magnetEnableQualityFilter && typeof magnetSearch.enableQualityFilter === 'boolean') host.magnetEnableQualityFilter.checked = magnetSearch.enableQualityFilter;
     }
 
     if (settings.listEnhancement) {

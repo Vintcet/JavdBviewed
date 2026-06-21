@@ -59,6 +59,7 @@ export function installContentLifecycleHandlers(): void {
                     sources: { sukebei: true, btdig: true, btsow: false, torrentz2: false, javbus: false, custom: [] },
                     maxResults: 8,
                     timeout: 5000,
+                    enableQualityFilter: (STATE.settings as any)?.magnetSearch?.enableQualityFilter !== false,
                 });
             } catch {}
         } else {
@@ -83,6 +84,7 @@ export function installContentLifecycleHandlers(): void {
                         custom: [],
                     },
                     maxResults: (magnetSearchConfig.maxResults ?? 15),
+                    enableQualityFilter: magnetSearchConfig.enableQualityFilter !== false,
                     timeout: (magnetSearchConfig.timeoutMs ?? 8000),
                 });
             } catch {
