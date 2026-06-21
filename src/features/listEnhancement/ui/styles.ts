@@ -236,6 +236,8 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         /* 演员页：资料头部保持原站内部排版，但外层与列表同样贴近页面边缘 */
         body .section > .container:has(.actor-section-name),
         body section > .container:has(.actor-section-name),
+        body .section > .container:has(.section-columns),
+        body section > .container:has(.section-columns),
         body .section > .container:has(.avatar-box),
         body section > .container:has(.avatar-box),
         body .actor-section .container {
@@ -246,6 +248,97 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
           padding-left: 0 !important;
           padding-right: 0 !important;
           box-sizing: border-box !important;
+        }
+
+        body .section-columns {
+          display: flex !important;
+          align-items: flex-start !important;
+          justify-content: flex-start !important;
+          gap: 8px !important;
+          width: 100% !important;
+          margin: 0 0 20px 0 !important;
+          flex-wrap: nowrap !important;
+        }
+
+        body .section-columns .actor-avatar,
+        body .section-columns > .column:first-child {
+          flex: 0 0 112px !important;
+          width: 112px !important;
+          max-width: 112px !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        body .section-columns .actor-avatar .image,
+        body .section-columns .actor-avatar .avatar,
+        body .section-columns > .column:first-child .image,
+        body .section-columns > .column:first-child .avatar {
+          width: 112px !important;
+          height: 112px !important;
+          min-width: 112px !important;
+          min-height: 112px !important;
+          display: block !important;
+          background-size: cover !important;
+          background-position: top center !important;
+          background-repeat: no-repeat !important;
+        }
+
+        body .section-columns > .column:not(:first-child) {
+          flex: 1 1 auto !important;
+          min-width: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        body .actor-section-name {
+          margin: 0 0 4px 0 !important;
+          font-size: 24px !important;
+          line-height: 1.25 !important;
+          font-weight: 700 !important;
+        }
+
+        body .section-meta {
+          margin: 2px 0 !important;
+          line-height: 1.5 !important;
+        }
+
+        body .section-columns .panel,
+        body .section-columns .panel-blocks,
+        body .section-columns .movie-panel-info {
+          display: grid !important;
+          grid-template-columns: repeat(3, minmax(160px, 1fr)) !important;
+          gap: 2px 36px !important;
+          width: 100% !important;
+          margin-top: 6px !important;
+        }
+
+        body .section-columns .panel-block {
+          display: flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+          min-height: 24px !important;
+          padding: 0 !important;
+          border: 0 !important;
+          line-height: 1.45 !important;
+          background: transparent !important;
+        }
+
+        body .avatar-box {
+          width: 100% !important;
+          display: flex !important;
+          align-items: flex-start !important;
+          justify-content: flex-start !important;
+          gap: 8px !important;
+          margin: 0 0 20px 0 !important;
+        }
+
+        body .avatar-box .photo-info {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 30px !important;
+          flex-direction: row !important;
+          background-color: #fff !important;
         }
       `;
     }

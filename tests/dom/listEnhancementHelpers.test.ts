@@ -105,7 +105,11 @@ describe('list enhancement helpers', () => {
     });
 
     expect(result.styleContent).toContain('body .section > .container:has(.actor-section-name)');
+    expect(result.styleContent).toContain('body .section > .container:has(.section-columns)');
     expect(result.styleContent).toContain('body .section > .container:has(.avatar-box)');
+    expect(result.styleContent).toContain('body .section-columns');
+    expect(result.styleContent).toContain('grid-template-columns: repeat(3, minmax(160px, 1fr))');
+    expect(result.styleContent).toContain('body .avatar-box .photo-info');
     expect(result.styleContent).toContain('width: var(--x-list-shell-width) !important');
     expect(result.styleContent).not.toContain('max-width: 1120px');
   });
