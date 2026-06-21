@@ -55,7 +55,8 @@ export function buildDesignTasks(doGetSettings: () => ExtensionSettings): Orches
     enabled: true,
   });
 
-  if (settings.userExperience?.enableMagnetSearch) {
+  const magnetSearchConfig = (settings as any).magnetSearch || {};
+  if (settings.userExperience?.enableMagnetSearch || magnetSearchConfig.enableQualityFilter !== false) {
     pushTask({ phase: 'idle', label: 'ux:magnet:autoSearch', source: 'global', enabled: true });
   }
 

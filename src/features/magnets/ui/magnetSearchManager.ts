@@ -155,12 +155,14 @@ export class MagnetSearchManager {
    * 初始化磁力搜索功能
    */
   async initialize(): Promise<void> {
-    if (!this.config.enabled || this.isInitialized) {
+    const searchEnabled = this.config.enabled === true;
+    const nativeEnhancementEnabled = this.config.enableQualityFilter !== false || this.config.blockMojContent === true;
+    if ((!searchEnabled && !nativeEnhancementEnabled) || this.isInitialized) {
       return;
     }
 
     try {
-      log('Initializing magnet search functionality...');
+      log('Initializing magnet functionality...');
 
       this.currentVideoId = extractVideoIdFromPage();
 
@@ -189,7 +191,9 @@ export class MagnetSearchManager {
       this.addUnifiedMagnetStyles();
 
       // 添加搜索源标签
-      this.addSearchSourceTags();
+      if (searchEnabled) {
+        this.addSearchSourceTags();
+      }
 
       // 屏蔽磁力区域广告
       if (this.config.blockMojContent) {
@@ -200,6 +204,12 @@ export class MagnetSearchManager {
       }
 
       this.applyNativeMagnetPresentation();
+
+      if (!searchEnabled) {
+        this.isInitialized = true;
+        log('Native magnet filtering initialized');
+        return;
+      }
 
       // 检查影片是否已看
       const isViewed = await this.checkIfVideoViewed();

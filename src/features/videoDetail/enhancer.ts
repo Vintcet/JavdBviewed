@@ -664,8 +664,14 @@ export class VideoDetailEnhancer {
       
       if (width > 0 && height > 0) {
         container.style.width = `${width}px`;
-        container.style.height = `${height}px`;
-        container.style.overflow = 'hidden';
+        if (container.querySelector(`#${DRIVE115_MATCH_PANEL_ID}`)) {
+          container.style.height = 'auto';
+          container.style.maxHeight = 'none';
+          container.style.overflow = 'visible';
+        } else {
+          container.style.height = `${height}px`;
+          container.style.overflow = 'hidden';
+        }
         log(`Container size set to: ${width}x${height}`);
       }
     } catch (error) {
@@ -1430,7 +1436,9 @@ export class VideoDetailEnhancer {
     if (!magnetsContent) return null;
 
     const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
-    const insertAfter = magnetPanel || magnetsContent;
+    const coverColumn = document.querySelector<HTMLElement>('.column-video-cover');
+    const coverImage = coverColumn?.querySelector<HTMLElement>('a[data-fancybox="gallery"], a[href*="/covers/"], img.video-cover, img');
+    const insertAfter = coverImage || magnetPanel || magnetsContent;
     let panel = document.getElementById(DRIVE115_MATCH_PANEL_ID) as HTMLElement | null;
 
     if (!panel) {
@@ -1454,10 +1462,18 @@ export class VideoDetailEnhancer {
     }
 
     panel.classList.remove('is-hidden');
+    panel.classList.toggle('jdb-drive115-match-under-cover', !!coverColumn);
     panel.removeAttribute('hidden');
     panel.style.display = 'block';
 
-    if (insertAfter.parentElement && panel.previousElementSibling !== insertAfter) {
+    if (coverColumn) {
+      coverColumn.style.height = 'auto';
+      coverColumn.style.maxHeight = 'none';
+      coverColumn.style.overflow = 'visible';
+      if (panel.parentElement !== coverColumn || panel.previousElementSibling !== insertAfter) {
+        insertAfter.insertAdjacentElement('afterend', panel);
+      }
+    } else if (insertAfter.parentElement && panel.previousElementSibling !== insertAfter) {
       insertAfter.insertAdjacentElement('afterend', panel);
     }
 
@@ -1600,6 +1616,11 @@ export class VideoDetailEnhancer {
         background: transparent !important;
       }
 
+      #${DRIVE115_MATCH_PANEL_ID}.jdb-drive115-match-under-cover {
+        width: 100%;
+        min-width: 0;
+      }
+
       html[data-theme="dark"] #${DRIVE115_MATCH_PANEL_ID} {
         --jdb-115-bg: #111827;
         --jdb-115-card: #1f2937;
@@ -1679,6 +1700,7 @@ export class VideoDetailEnhancer {
 
       .jdb-drive115-match-table {
         width: 100%;
+        table-layout: fixed;
         border-collapse: collapse;
         color: var(--jdb-115-text);
         font-size: 13px;
@@ -1704,7 +1726,7 @@ export class VideoDetailEnhancer {
       }
 
       .jdb-drive115-match-name {
-        max-width: 520px;
+        max-width: 100%;
         word-break: break-all;
       }
 
@@ -1815,8 +1837,7 @@ export class VideoDetailEnhancer {
     if (!magnetsContent) return null;
 
     const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
-    const drive115MatchPanel = document.getElementById(DRIVE115_MATCH_PANEL_ID) as HTMLElement | null;
-    const insertAfter = drive115MatchPanel || magnetPanel || magnetsContent;
+    const insertAfter = magnetPanel || magnetsContent;
     let reviewsRoot = document.querySelector('div[data-movie-tab-target="reviews"], #reviews') as HTMLElement | null;
 
     if (!reviewsRoot) {
@@ -2448,8 +2469,8 @@ export class VideoDetailEnhancer {
       #reviews .review-title .likes,
       div[data-movie-tab-target="reviews"] .review-title .likes {
         float: none !important;
-        order: 10;
-        margin-left: auto;
+        order: initial;
+        margin-left: 0;
       }
 
       #reviews .review-title .likes .button,
@@ -2754,128 +2775,8 @@ export class VideoDetailEnhancer {
    * 添加评论破解提示横幅
    */
   private addReviewBreakerBanner(listEl: HTMLElement, fetchedCount: number, totalCount: number): void {
-    this.injectReviewBreakerStyles();
-    // 检查是否已存在横幅
-    const existingBanner = document.querySelector('#jhs-review-banner');
-    if (existingBanner) {
-      existingBanner.remove();
-    }
-
-    const banner = document.createElement('div');
-    banner.id = 'jhs-review-banner';
-    banner.className = 'jdb-review-banner';
-    banner.style.cssText = `
-      margin: 0 0 16px 0;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, #4caf50 0%, #2196f3 100%);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      animation: slideInDown 0.3s ease-out;
-    `;
-
-    // 图标
-    const icon = document.createElement('span');
-    icon.innerHTML = '✨';
-    icon.style.cssText = `
-      font-size: 20px;
-      flex-shrink: 0;
-    `;
-
-    // 文字内容
-    const textContent = document.createElement('div');
-    textContent.style.cssText = `
-      flex: 1;
-      color: white;
-      font-size: 14px;
-      line-height: 1.5;
-    `;
-
-    const mainText = document.createElement('div');
-    mainText.style.fontWeight = 'bold';
-    mainText.textContent = `🎉 已为您解锁全部 ${Math.max(fetchedCount, totalCount)} 条评论`;
-
-    const subText = document.createElement('div');
-    subText.style.cssText = `
-      font-size: 12px;
-      opacity: 0.9;
-      margin-top: 2px;
-    `;
-    subText.textContent = `由 JavDB 助手提供 · 原本仅显示 ${Math.min(3, totalCount)} 条`;
-
-    textContent.appendChild(mainText);
-    textContent.appendChild(subText);
-
-    // 关闭按钮
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '×';
-    closeBtn.style.cssText = `
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      font-size: 20px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.2s;
-    `;
-    closeBtn.onmouseover = () => {
-      closeBtn.style.background = 'rgba(255,255,255,0.3)';
-    };
-    closeBtn.onmouseout = () => {
-      closeBtn.style.background = 'rgba(255,255,255,0.2)';
-    };
-    closeBtn.onclick = () => {
-      banner.style.animation = 'slideOutUp 0.3s ease-out';
-      setTimeout(() => banner.remove(), 300);
-    };
-
-    banner.appendChild(icon);
-    banner.appendChild(textContent);
-    banner.appendChild(closeBtn);
-
-    // 添加动画样式
-    if (!document.getElementById('jhs-banner-animations')) {
-      const style = document.createElement('style');
-      style.id = 'jhs-banner-animations';
-      style.textContent = `
-        @keyframes slideInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slideOutUp {
-          from {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    // 插入到评论列表之前
-    if (listEl.parentElement) {
-      listEl.parentElement.insertBefore(banner, listEl);
-    }
-    
-    log('[ReviewBreaker] Banner added before review list');
+    document.querySelector('#jhs-review-banner')?.remove();
+    log('[ReviewBreaker] Banner suppressed by default', { fetchedCount, totalCount, hasList: !!listEl });
   }
 
   /**
@@ -3106,13 +3007,14 @@ export class VideoDetailEnhancer {
       const content = (node.querySelector('.content p')?.textContent || '').trim();
       const time = (node.querySelector('.time')?.textContent || '').trim();
       const likesText = (node.querySelector('.likes-count')?.textContent || '0').trim();
+      const likesMatch = likesText.match(/\d+/);
       const rating = node.querySelectorAll('.score-stars .icon-star').length * 2;
       return {
         id: rawId,
         author: authorText || '匿名用户',
         content,
         date: time,
-        likes: parseInt(likesText, 10) || 0,
+        likes: likesMatch ? parseInt(likesMatch[0], 10) || 0 : 0,
         rating,
       };
     }).filter(review => review.content);
@@ -3187,10 +3089,10 @@ export class VideoDetailEnhancer {
     title.className = 'review-title jdb-review-head';
 
     const likesWrap = document.createElement('div');
-    likesWrap.className = 'likes is-pulled-right jdb-review-likes';
+    likesWrap.className = 'likes jdb-review-likes';
     const likeCount = document.createElement('span');
     likeCount.className = 'likes-count jdb-review-like-count';
-    likeCount.textContent = `贊 ${review.likes ?? 0}`;
+    likeCount.textContent = `点赞:${review.likes ?? 0}`;
     likesWrap.appendChild(likeCount);
 
     // 作者
@@ -3225,9 +3127,9 @@ export class VideoDetailEnhancer {
     meta.className = 'jdb-review-meta';
     meta.appendChild(stars);
     meta.appendChild(time);
+    meta.appendChild(likesWrap);
 
     // 标题行组装
-    title.appendChild(likesWrap);
     title.appendChild(author);
     title.appendChild(meta);
 

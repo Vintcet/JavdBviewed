@@ -391,12 +391,12 @@ export const LIST_ENHANCEMENT_BASE_STYLES = `
 
     .x-title-full {
       overflow: hidden !important;
-      text-overflow: clip !important;
+      text-overflow: ellipsis !important;
       white-space: normal !important;
-      height: 80px !important;
-      min-height: 80px !important;
-      max-height: 80px !important;
       line-height: 1.35 !important;
+      height: 4.05em !important;
+      min-height: 4.05em !important;
+      max-height: 4.05em !important;
       display: -webkit-box !important;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 3;

@@ -266,7 +266,10 @@ async function initialize(): Promise<void> {
         preregisterBlueprints.push({ phase: 'critical', label: 'superRankingNav:init', priority: 9, visibilityPolicy: 'background_allowed' });
     }
     preregisterBlueprints.push({ phase: 'high', label: 'ui:remove-unwanted', priority: 3, visibilityPolicy: (isVideoPage || isActorPage) ? 'background_allowed' : 'foreground_first' });
-    if (settings.userExperience.enableMagnetSearch && isVideoPage) {
+    const preregisterMagnetConfig = (settings as any).magnetSearch || {};
+    const preregisterMagnetEnhancementEnabled = isVideoPage
+        && (settings.userExperience.enableMagnetSearch === true || preregisterMagnetConfig.enableQualityFilter !== false);
+    if (preregisterMagnetEnhancementEnabled) {
         preregisterBlueprints.push({ phase: 'idle', label: 'ux:magnet:autoSearch' });
     }
     if (settings.userExperience.enableAnchorOptimization) {
@@ -445,18 +448,20 @@ async function initialize(): Promise<void> {
 
     initOrchestrator.add('high', () => removeUnwantedButtons(), { label: 'ui:remove-unwanted', delayMs: 200, priority: 3, visibilityPolicy: (isVideoPage || isActorPage) ? 'background_allowed' : 'foreground_first' });
 
-    if (settings.userExperience.enableMagnetSearch && isVideoPage) {
-        console.log('[JavDB Ext] Scheduling magnet search in idle phase (last)');
+    const enableMagnetSearch = settings.userExperience.enableMagnetSearch === true;
+    const enableMagnetQualityFilter = magnetCfg.enableQualityFilter !== false;
+    if (isVideoPage && (enableMagnetSearch || enableMagnetQualityFilter)) {
+        console.log('[JavDB Ext] Scheduling magnet enhancement in idle phase (last)');
         initOrchestrator.add('idle', () => {
             try {
-                log('Magnet search manager deferred initialization');
+                log('Magnet manager deferred initialization');
                 const magnetSearchConfig = (settings as any).magnetSearch || {};
                 const sources = magnetSearchConfig.sources || {};
                 magnetSearchManager.updateConfig({
-                    enabled: true,
-                    showInlineResults: true,
-                    showFloatingButton: true,
-                    autoSearch: magnetSearchConfig.autoSearch === true,
+                    enabled: enableMagnetSearch,
+                    showInlineResults: enableMagnetSearch,
+                    showFloatingButton: enableMagnetSearch,
+                    autoSearch: enableMagnetSearch && magnetSearchConfig.autoSearch === true,
                     blockMojContent: magnetSearchConfig.blockMojContent !== false,
                     enableQualityFilter: magnetSearchConfig.enableQualityFilter !== false,
                     sources: {

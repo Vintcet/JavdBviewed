@@ -128,7 +128,7 @@ export class ReviewBreakerService {
         author: review.author || review.username || '匿名用户',
         rating: review.rating || review.score,
         date: review.created_at || review.date || new Date().toISOString(),
-        likes: review.likes || review.up_votes || 0,
+        likes: review.likes_count ?? review.likes ?? review.up_votes ?? 0,
       }));
 
       log(`[ReviewBreaker] Successfully fetched ${reviews.length} reviews`);
