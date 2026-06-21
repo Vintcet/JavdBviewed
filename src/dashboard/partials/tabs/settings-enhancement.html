@@ -45,6 +45,8 @@
                                     <input type="checkbox" id="enableActorQuickActions">
                                     <input type="checkbox" id="enableListDisplayControl">
                                     <input type="checkbox" id="enableContainerExpansion">
+                                    <input type="checkbox" id="enableWideLayout">
+                                    <input type="checkbox" id="enableSearchBarLayout">
                                     <input type="checkbox" id="enableFullTitle">
                                     <input type="checkbox" id="enableTitleTranslation">
                                     <input type="checkbox" id="showStatusBadge">
@@ -197,6 +199,7 @@
                                                     <option value="replace">替换原始标题</option>
                                                 </select>
                                             </div>
+
                                         </div>
                                     </div>
 
@@ -737,6 +740,30 @@
                                                 <p class="input-description">
                                                     开启后，搜索框和内容容器将扩展到100%宽度（接近浏览器窗口边缘），覆盖 Bulma 框架的默认宽度限制。<br>
                                                     <strong>注意：</strong>关闭此选项后，搜索框和容器将保持原始宽度，只有影片列表容器受上方"容器宽度"滑块控制。
+                                                </p>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label class="checkbox-label">
+                                                    <span>宽屏列表布局</span>
+                                                    <div class="enhancement-toggle-wrapper">
+                                                        <button class="enhancement-toggle" data-target="enableWideLayout"></button>
+                                                    </div>
+                                                </label>
+                                                <p class="input-description">
+                                                    借鉴 JAV-JHS 的列表页布局，减少左右留白，让列表、分类标签和工具栏更接近浏览器宽度，并允许顶部标签换行。
+                                                </p>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label class="checkbox-label">
+                                                    <span>搜索栏布局优化</span>
+                                                    <div class="enhancement-toggle-wrapper">
+                                                        <button class="enhancement-toggle" data-target="enableSearchBarLayout"></button>
+                                                    </div>
+                                                </label>
+                                                <p class="input-description">
+                                                    将搜索栏调整为更紧凑的宽屏样式，桌面端滚动时保持在页面顶部，减少列表页反复搜索时的鼠标移动。
                                                 </p>
                                             </div>
                                         </div>

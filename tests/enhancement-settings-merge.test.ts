@@ -16,6 +16,8 @@ describe('mergeEnhancementSettingsForSave', () => {
       columnCount: 6,
       containerWidth: 120,
       enableContainerExpansion: true,
+      enableWideLayout: true,
+      enableSearchBarLayout: true,
     };
 
     const merged = mergeEnhancementSettingsForSave(current, {
@@ -35,6 +37,23 @@ describe('mergeEnhancementSettingsForSave', () => {
     expect(merged.listEnhancement?.treatSubscribedAsFavorited).toBe(false);
     expect(merged.listEnhancement?.listDisplayControl?.columnCount).toBe(6);
     expect(merged.listEnhancement?.listDisplayControl?.containerWidth).toBe(120);
+    expect(merged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(true);
+    expect(merged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(true);
+  });
+
+  it('persists wide list and search bar layout toggles with default off values', () => {
+    const current = structuredClone(DEFAULT_SETTINGS);
+
+    const defaultMerged = mergeEnhancementSettingsForSave(current, {} as any);
+    const enabledMerged = mergeEnhancementSettingsForSave(current, {
+      enableWideLayout: { checked: true },
+      enableSearchBarLayout: { checked: true },
+    } as any);
+
+    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(false);
+    expect(defaultMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(false);
+    expect(enabledMerged.listEnhancement?.listDisplayControl?.enableWideLayout).toBe(true);
+    expect(enabledMerged.listEnhancement?.listDisplayControl?.enableSearchBarLayout).toBe(true);
   });
 
   it('persists the list status quick action toggle with a default off value', () => {

@@ -99,6 +99,8 @@ export function doSetSettings(host: EnhancementSettingsSyncHost, settings: Parti
         if (host.listColumnCount && typeof ldc.columnCount === 'number') host.listColumnCount.value = String(ldc.columnCount);
         if (host.listContainerWidth && typeof ldc.containerWidth === 'number') host.listContainerWidth.value = String(ldc.containerWidth);
         if (host.enableContainerExpansion && typeof ldc.enableContainerExpansion === 'boolean') host.enableContainerExpansion.checked = ldc.enableContainerExpansion;
+        if (host.enableWideLayout && typeof ldc.enableWideLayout === 'boolean') host.enableWideLayout.checked = ldc.enableWideLayout;
+        if (host.enableSearchBarLayout && typeof ldc.enableSearchBarLayout === 'boolean') host.enableSearchBarLayout.checked = ldc.enableSearchBarLayout;
       }
     }
 

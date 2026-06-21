@@ -74,6 +74,22 @@ describe('list enhancement helpers', () => {
     expect(result.styleContent).toContain('width: calc(20% - 10px)');
   });
 
+  it('builds JHS-inspired wide layout and search bar CSS when toggles are enabled', () => {
+    const result = buildListDisplayControlStyles({
+      columnCount: 4,
+      containerWidth: 100,
+      enableContainerExpansion: false,
+      enableWideLayout: true,
+      enableSearchBarLayout: true,
+      isVideoDetailPage: false,
+    });
+
+    expect(result.styleContent).toContain('calc(100vw - 24px)');
+    expect(result.styleContent).toContain('body .main-tabs');
+    expect(result.styleContent).toContain('body #search-bar-container');
+    expect(result.styleContent).toContain('position: sticky');
+  });
+
   it('matches actors from title suffix and weighted fallback candidates without duplicates', () => {
     const miho = createActor('actor-miho', 'Miho Nana');
     const yuna = createActor('actor-yuna', 'Yuna Ogura');

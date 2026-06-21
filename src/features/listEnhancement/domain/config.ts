@@ -5,6 +5,8 @@ export interface ListDisplayControlConfig {
   columnCount: number;
   containerWidth: number;
   enableContainerExpansion: boolean;
+  enableWideLayout?: boolean;
+  enableSearchBarLayout?: boolean;
 }
 
 export interface PopularityEffectsConfig {
@@ -84,6 +86,8 @@ export function createDefaultListEnhancementConfig(): ListEnhancementConfig {
       columnCount: 4,
       containerWidth: 100,
       enableContainerExpansion: false,
+      enableWideLayout: false,
+      enableSearchBarLayout: false,
     },
     showStatusBadge: true,
     enableStatusQuickAction: false,

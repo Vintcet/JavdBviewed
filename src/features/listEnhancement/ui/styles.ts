@@ -98,14 +98,21 @@ export function buildPopularityStyles(): string {
 }
 
 export function buildListDisplayControlStyles(input: ListDisplayStyleInput): ListDisplayStyleResult {
-  const { columnCount, containerWidth, enableContainerExpansion, isVideoDetailPage } = input;
+  const {
+    columnCount,
+    containerWidth,
+    enableContainerExpansion,
+    enableWideLayout,
+    enableSearchBarLayout,
+    isVideoDetailPage,
+  } = input;
   const itemWidthCalc = `calc(${100 / columnCount}% - 10px)`;
   const marginValue = containerWidth > 100
     ? `0 ${(100 - containerWidth) / 2}%`
     : '0 auto';
 
   let styleContent = '';
-  if (enableContainerExpansion) {
+  if (enableContainerExpansion || enableWideLayout) {
     if (isVideoDetailPage) {
       styleContent += `
         /* 影片详情页：只扩展搜索框 */
@@ -135,6 +142,97 @@ export function buildListDisplayControlStyles(input: ListDisplayStyleInput): Lis
         }
         `;
     }
+  }
+
+  if (enableWideLayout && !isVideoDetailPage) {
+    styleContent += `
+        /* JHS 风格宽屏布局：减少左右留白，让列表更接近浏览器边缘 */
+        body .section {
+          padding-left: 12px !important;
+          padding-right: 12px !important;
+        }
+
+        body .section > .container,
+        body section > .container,
+        body .container:has(.movie-list) {
+          width: calc(100vw - 24px) !important;
+          max-width: calc(100vw - 24px) !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          box-sizing: border-box !important;
+        }
+
+        body .main-tabs,
+        body .tabs {
+          overflow-x: hidden !important;
+          flex-wrap: wrap !important;
+          justify-content: flex-start !important;
+        }
+
+        body .main-tabs ul,
+        body .tabs ul {
+          flex-wrap: wrap !important;
+          flex-grow: 0 !important;
+        }
+
+        body .toolbar {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 8px !important;
+          align-items: center !important;
+        }
+      `;
+  }
+
+  if (enableSearchBarLayout) {
+    styleContent += `
+        /* JHS 风格搜索栏优化：紧凑、靠上、宽屏自适应 */
+        body #search-bar-container,
+        body #search-bar-wrap {
+          width: min(1120px, calc(100vw - 24px)) !important;
+          max-width: calc(100vw - 24px) !important;
+          margin: 8px auto 12px !important;
+          padding: 8px 12px !important;
+          box-sizing: border-box !important;
+          border-radius: 8px !important;
+          background: rgba(255, 255, 255, 0.94) !important;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        body #search-bar-container form,
+        body #search-bar-wrap form,
+        body #search-bar-container .field,
+        body #search-bar-wrap .field {
+          margin-bottom: 0 !important;
+        }
+
+        body #search-bar-container input.input,
+        body #search-bar-wrap input.input,
+        body #search-bar-container .input,
+        body #search-bar-wrap .input {
+          min-height: 38px !important;
+          border-radius: 6px !important;
+          box-shadow: none !important;
+        }
+
+        body #search-bar-container .button,
+        body #search-bar-wrap .button {
+          min-height: 38px !important;
+          border-radius: 6px !important;
+        }
+
+        @media (min-width: 769px) {
+          body #search-bar-container,
+          body #search-bar-wrap {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 30 !important;
+            backdrop-filter: blur(10px);
+          }
+        }
+      `;
   }
 
   styleContent += `

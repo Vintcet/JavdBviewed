@@ -54,6 +54,8 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.enableScrollPaging) host.enableScrollPaging.checked = listEnhancement.enableScrollPaging || false;
   if (host.enableFullTitle) host.enableFullTitle.checked = (listEnhancement as any).enableFullTitle !== false;
   if (host.enableTitleTranslation) host.enableTitleTranslation.checked = (listEnhancement as any).enableTitleTranslation === true;
+  if (host.enableWideLayout) host.enableWideLayout.checked = (listEnhancement as any).listDisplayControl?.enableWideLayout === true;
+  if (host.enableSearchBarLayout) host.enableSearchBarLayout.checked = (listEnhancement as any).listDisplayControl?.enableSearchBarLayout === true;
   if (host.enableActorWatermark) host.enableActorWatermark.checked = (listEnhancement as any).enableActorWatermark === true;
   if (host.showStatusBadge) host.showStatusBadge.checked = (listEnhancement as any).showStatusBadge !== false;
   if (host.enableStatusQuickAction) host.enableStatusQuickAction.checked = (listEnhancement as any).enableStatusQuickAction === true;
@@ -125,6 +127,8 @@ export async function doLoadSettings(host: EnhancementLoadHost): Promise<void> {
   if (host.listColumnCount && typeof (listEnhancement as any).listDisplayControl?.columnCount === 'number') host.listColumnCount.value = String((listEnhancement as any).listDisplayControl.columnCount);
   if (host.listContainerWidth && typeof (listEnhancement as any).listDisplayControl?.containerWidth === 'number') host.listContainerWidth.value = String((listEnhancement as any).listDisplayControl.containerWidth);
   if (host.enableContainerExpansion && typeof (listEnhancement as any).listDisplayControl?.enableContainerExpansion === 'boolean') host.enableContainerExpansion.checked = (listEnhancement as any).listDisplayControl.enableContainerExpansion;
+  if (host.enableWideLayout && typeof (listEnhancement as any).listDisplayControl?.enableWideLayout === 'boolean') host.enableWideLayout.checked = (listEnhancement as any).listDisplayControl.enableWideLayout;
+  if (host.enableSearchBarLayout && typeof (listEnhancement as any).listDisplayControl?.enableSearchBarLayout === 'boolean') host.enableSearchBarLayout.checked = (listEnhancement as any).listDisplayControl.enableSearchBarLayout;
   if (host.showStatusBadge && typeof (listEnhancement as any).showStatusBadge === 'boolean') host.showStatusBadge.checked = (listEnhancement as any).showStatusBadge;
   if (host.enableStatusQuickAction && typeof (listEnhancement as any).enableStatusQuickAction === 'boolean') host.enableStatusQuickAction.checked = (listEnhancement as any).enableStatusQuickAction;
   if (host.enablePopularityEffects && typeof (listEnhancement as any).popularityEffects?.enabled === 'boolean') host.enablePopularityEffects.checked = (listEnhancement as any).popularityEffects.enabled;

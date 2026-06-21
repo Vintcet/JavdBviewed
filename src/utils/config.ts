@@ -579,6 +579,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
             columnCount: 4,
             containerWidth: 100,
             enableContainerExpansion: false,
+            enableWideLayout: false,
+            enableSearchBarLayout: false,
         },
         showStatusBadge: true,
         enableStatusQuickAction: false,

@@ -73,6 +73,8 @@ export function initializeElements(host: EnhancementInitHost): void {
     ['listContainerWidth', 'listContainerWidth'],
     ['listContainerWidthValue', 'listContainerWidthValue'],
     ['enableContainerExpansion', 'enableContainerExpansion'],
+    ['enableWideLayout', 'enableWideLayout'],
+    ['enableSearchBarLayout', 'enableSearchBarLayout'],
     ['enableFullTitle', 'enableFullTitle'],
     ['enableTitleTranslation', 'enableTitleTranslation'],
     ['showStatusBadge', 'showStatusBadge'],

@@ -128,6 +128,8 @@ export class EnhancementSettings extends BaseSettingsPanel {
     private listContainerWidth!: HTMLInputElement;
     private listContainerWidthValue!: HTMLSpanElement;
     private enableContainerExpansion!: HTMLInputElement;
+    private enableWideLayout!: HTMLInputElement;
+    private enableSearchBarLayout!: HTMLInputElement;
     private enableFullTitle!: HTMLInputElement;
     private enableTitleTranslation!: HTMLInputElement;
     // 🆕 状态标签显示

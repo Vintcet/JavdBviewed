@@ -61,6 +61,8 @@ export function bindEvents(host: EnhancementBindEventsHost): void {
     host.updateContainerWidthMax();
     host.handleSettingChange();
   });
+  host.enableWideLayout?.addEventListener('change', host.handleSettingChange.bind(host));
+  host.enableSearchBarLayout?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableFullTitle?.addEventListener('change', host.handleSettingChange.bind(host));
   host.enableTitleTranslation?.addEventListener('change', host.handleSettingChange.bind(host));
   if (host.addFilterRuleBtn) host.addFilterRuleBtn.addEventListener('click', host.addFilterRule.bind(host));

@@ -163,7 +163,9 @@ class ListEnhancementManager {
       lastControl.enabled !== currentControl?.enabled ||
       lastControl.columnCount !== currentControl?.columnCount ||
       lastControl.containerWidth !== currentControl?.containerWidth ||
-      lastControl.enableContainerExpansion !== currentControl?.enableContainerExpansion
+      lastControl.enableContainerExpansion !== currentControl?.enableContainerExpansion ||
+      lastControl.enableWideLayout !== currentControl?.enableWideLayout ||
+      lastControl.enableSearchBarLayout !== currentControl?.enableSearchBarLayout
     );
     
     log('Display control changed:', displayControlChanged);
@@ -177,7 +179,9 @@ class ListEnhancementManager {
           enabled: currentControl.enabled,
           columnCount: currentControl.columnCount,
           containerWidth: currentControl.containerWidth,
-          enableContainerExpansion: currentControl.enableContainerExpansion ?? false
+          enableContainerExpansion: currentControl.enableContainerExpansion ?? false,
+          enableWideLayout: currentControl.enableWideLayout ?? false,
+          enableSearchBarLayout: currentControl.enableSearchBarLayout ?? false
         };
       }
     }
@@ -364,7 +368,9 @@ class ListEnhancementManager {
         enabled: this.config.listDisplayControl.enabled,
         columnCount: this.config.listDisplayControl.columnCount,
         containerWidth: this.config.listDisplayControl.containerWidth,
-        enableContainerExpansion: this.config.listDisplayControl.enableContainerExpansion ?? false
+        enableContainerExpansion: this.config.listDisplayControl.enableContainerExpansion ?? false,
+        enableWideLayout: this.config.listDisplayControl.enableWideLayout ?? false,
+        enableSearchBarLayout: this.config.listDisplayControl.enableSearchBarLayout ?? false
       };
     }
 

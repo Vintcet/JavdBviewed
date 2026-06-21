@@ -58,6 +58,8 @@ describe('getSettings listEnhancement regression', () => {
     expect(settings.listEnhancement.listDisplayControl.enabled).toBe(true);
     expect(settings.listEnhancement.listDisplayControl.columnCount).toBe(6);
     expect(settings.listEnhancement.listDisplayControl.containerWidth).toBe(100);
+    expect(settings.listEnhancement.listDisplayControl.enableWideLayout).toBe(false);
+    expect(settings.listEnhancement.listDisplayControl.enableSearchBarLayout).toBe(false);
     expect(settings.listEnhancement.enableVideoPreview).toBe(true);
     expect(settings.listEnhancement.enableStatusQuickAction).toBe(false);
   });

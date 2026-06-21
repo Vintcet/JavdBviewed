@@ -19,6 +19,8 @@ type EnhancementSaveHost = {
   listColumnCount?: HTMLInputElement;
   listContainerWidth?: HTMLInputElement;
   enableContainerExpansion?: HTMLInputElement;
+  enableWideLayout?: HTMLInputElement;
+  enableSearchBarLayout?: HTMLInputElement;
   enableFullTitle?: HTMLInputElement;
   enableTitleTranslation?: HTMLInputElement;
   showStatusBadge?: HTMLInputElement;
@@ -94,6 +96,8 @@ export function mergeEnhancementSettingsForSave(
         columnCount: parseNumber(host.listColumnCount?.value, existingListDisplayControl.columnCount ?? 4),
         containerWidth: parseNumber(host.listContainerWidth?.value, existingListDisplayControl.containerWidth ?? 100),
         enableContainerExpansion: host.enableContainerExpansion?.checked ?? existingListDisplayControl.enableContainerExpansion ?? false,
+        enableWideLayout: host.enableWideLayout?.checked ?? existingListDisplayControl.enableWideLayout ?? false,
+        enableSearchBarLayout: host.enableSearchBarLayout?.checked ?? existingListDisplayControl.enableSearchBarLayout ?? false,
       },
       showStatusBadge: host.showStatusBadge?.checked ?? (existingListEnhancement as any).showStatusBadge ?? true,
       enableStatusQuickAction: host.enableStatusQuickAction?.checked ?? (existingListEnhancement as any).enableStatusQuickAction ?? false,
