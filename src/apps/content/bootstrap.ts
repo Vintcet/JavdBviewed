@@ -27,7 +27,7 @@ import { waitForElement } from '../../platform/browser/domUtils';
 import { createTaskTimeoutGuard, isTaskTimeoutError } from '../../platform/tasks';
 import { runChunkedWork, yieldToMainThread } from '../../platform/tasks';
 import { PasswordHelper } from '../../features/passwordHelper/content';
-import { showEnhancementLoading } from '../../platform/browser/enhancementLoadingIndicator';
+import { showEnhancementDone, showEnhancementLoading } from '../../platform/browser/enhancementLoadingIndicator';
 import {
     applyOnlineAvailabilitySitePreferences,
     DEFAULT_ONLINE_AVAILABILITY_SITES,
@@ -662,6 +662,10 @@ async function initialize(): Promise<void> {
         await initOrchestrator.run();
     } catch (e) {
         log('Init orchestrator run failed:', e);
+    } finally {
+        if (isActorPage && document.getElementById('enhancement-loading')) {
+            showEnhancementDone();
+        }
     }
 
     if (isCurrentVideoPage) {
