@@ -235,6 +235,43 @@
     border-radius: 8px;
 }
 
+.route-endpoint-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.route-endpoint-card {
+    padding: 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+}
+
+.route-endpoint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.route-endpoint-header .form-label {
+    margin-bottom: 0 !important;
+}
+
+.route-endpoint-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.route-endpoint-row .text-input {
+    max-width: none !important;
+}
+
 .routes-list {
     margin-bottom: 10px;
 }
@@ -249,7 +286,7 @@
 /* 线路项样式 */
 .route-item {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
     padding: 12px;
@@ -595,16 +632,8 @@
     }
     
     .route-item {
-        grid-template-columns: auto 1fr;
+        grid-template-columns: 1fr;
         gap: 10px;
-    }
-    
-    .route-checkbox {
-        grid-row: 1;
-    }
-    
-    .route-info {
-        grid-row: 1;
     }
     
     .route-actions {
@@ -630,6 +659,23 @@
     
     .form-group-inline .input-with-icon {
         width: 100% !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .route-endpoint-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .route-endpoint-row {
+        grid-template-columns: 1fr;
+    }
+
+    .route-endpoint-row .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 

@@ -278,6 +278,7 @@ class ListEnhancementManager {
       document,
       window,
       control: this.config.listDisplayControl,
+      allowedHosts: this.config.allowedJavdbHosts,
       logger: (...args) => log(...args),
     });
   }

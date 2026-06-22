@@ -66,6 +66,27 @@ function isCurrentPageMatchedByEmby(settings: any): boolean {
     return matchUrls.some((pattern) => matchesEmbyUrlPattern(currentUrl, pattern));
 }
 
+function collectJavdbRouteHosts(routeConfig: any): string[] {
+    const urls = [
+        routeConfig?.primary,
+        routeConfig?.noProxyUrl,
+        ...(Array.isArray(routeConfig?.alternatives)
+            ? routeConfig.alternatives.filter((route: any) => route?.enabled !== false).map((route: any) => route?.url)
+            : []),
+    ];
+    const hosts = new Set<string>();
+    urls.forEach((url) => {
+        const raw = String(url || '').trim();
+        if (!raw) return;
+        const withProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+        try {
+            const hostname = new URL(withProtocol).hostname.toLowerCase();
+            if (hostname) hosts.add(hostname);
+        } catch {}
+    });
+    return Array.from(hosts);
+}
+
 async function runActorRemarksOnActorPage(settings: any, timeoutMs?: number): Promise<void> {
     try {
         const enabled = settings?.videoEnhancement?.enableActorRemarks === true;
@@ -262,7 +283,8 @@ async function initialize(): Promise<void> {
     if (settings.userExperience.enableKeyboardShortcuts) {
         preregisterBlueprints.push({ phase: 'high', label: 'ux:shortcuts:init', priority: 8 });
     }
-    if (isSuperRankingSupportedHost() && (settings.userExperience as any).enableSuperRanking !== false) {
+    const preregisterJavdbRouteHosts = collectJavdbRouteHosts(settings.routes?.javdb);
+    if (isSuperRankingSupportedHost(window.location.hostname, preregisterJavdbRouteHosts) && (settings.userExperience as any).enableSuperRanking !== false) {
         preregisterBlueprints.push({ phase: 'critical', label: 'superRankingNav:init', priority: 9, visibilityPolicy: 'background_allowed' });
     }
     preregisterBlueprints.push({ phase: 'high', label: 'ui:remove-unwanted', priority: 3, visibilityPolicy: (isVideoPage || isActorPage) ? 'background_allowed' : 'foreground_first' });
@@ -442,8 +464,9 @@ async function initialize(): Promise<void> {
         initOrchestrator.add('high', () => keyboardShortcutsManager.initialize(), { label: 'ux:shortcuts:init', delayMs: 0, priority: 8 });
     }
 
-    if (isSuperRankingSupportedHost() && (settings.userExperience as any).enableSuperRanking !== false) {
-        initOrchestrator.add('critical', () => initializeSuperRankingNav(), { label: 'superRankingNav:init', priority: 9, visibilityPolicy: 'background_allowed' });
+    const javdbRouteHosts = collectJavdbRouteHosts(settings.routes?.javdb);
+    if (isSuperRankingSupportedHost(window.location.hostname, javdbRouteHosts) && (settings.userExperience as any).enableSuperRanking !== false) {
+        initOrchestrator.add('critical', () => initializeSuperRankingNav(window.location.hostname, javdbRouteHosts), { label: 'superRankingNav:init', priority: 9, visibilityPolicy: 'background_allowed' });
     }
 
     initOrchestrator.add('high', () => removeUnwantedButtons(), { label: 'ui:remove-unwanted', delayMs: 200, priority: 3, visibilityPolicy: (isVideoPage || isActorPage) ? 'background_allowed' : 'foreground_first' });
@@ -551,6 +574,7 @@ async function initialize(): Promise<void> {
             },
             // 🆕 状态标签显示
             showStatusBadge: (settings.listEnhancement as any)?.showStatusBadge !== false, // 默认启用
+            allowedJavdbHosts: collectJavdbRouteHosts(settings.routes?.javdb),
             popularityEffects: {
                 enabled: (settings.listEnhancement as any)?.popularityEffects?.enabled === true,                minRating: Math.max(0, Math.min(5, parseFloat(String((settings.listEnhancement as any)?.popularityEffects?.minRating ?? 4)) || 4)),
                 minRatingCount: Math.max(0, parseInt(String((settings.listEnhancement as any)?.popularityEffects?.minRatingCount ?? 350), 10) || 350),

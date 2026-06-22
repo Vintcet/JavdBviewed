@@ -3153,7 +3153,7 @@ export class VideoDetailEnhancer {
         link.href = magnetText;
         link.textContent = magnetText;
       } else {
-        link.href = `https://javdb.com/search?q=${encodeURIComponent(rawId)}&f=all`;
+        link.href = `${window.location.origin}/search?q=${encodeURIComponent(rawId)}&f=all`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = rawId;

@@ -5,6 +5,7 @@ export interface ApplyListDisplayControlOptions {
   document: Document;
   window: Window;
   control?: ListDisplayControlConfig;
+  allowedHosts?: string[];
   logger?: (...args: any[]) => void;
 }
 
@@ -24,7 +25,7 @@ export function applyListDisplayControl(options: ApplyListDisplayControlOptions)
   const { document: documentRef, window: windowRef, control } = options;
   const hostname = windowRef.location.hostname;
 
-  if (!isListDisplayControlAllowedHost(hostname)) {
+  if (!isListDisplayControlAllowedHost(hostname, options.allowedHosts)) {
     options.logger?.('[LIST DISPLAY] Domain not allowed for list display control:', hostname);
     removeListDisplayControlStyle(documentRef);
     restoreSearchBarPlacement(documentRef);
@@ -148,8 +149,17 @@ export function restoreSearchBarPlacement(documentRef: Document): void {
   documentRef.getElementById(NAV_SEARCH_BOX_ID)?.remove();
 }
 
-export function isListDisplayControlAllowedHost(hostname: string): boolean {
-  return ALLOWED_DOMAINS.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
+export function isListDisplayControlAllowedHost(hostname: string, extraAllowedHosts: string[] = []): boolean {
+  const allowedDomains = Array.from(new Set([
+    ...ALLOWED_DOMAINS,
+    ...extraAllowedHosts
+      .map(host => String(host || '').trim().toLowerCase())
+      .filter(Boolean),
+  ]));
+  const normalizedHostname = String(hostname || '').trim().toLowerCase();
+  return allowedDomains.some(domain =>
+    normalizedHostname === domain || normalizedHostname.endsWith(`.${domain}`)
+  );
 }
 
 function removeColumnsClasses(container: HTMLElement): void {

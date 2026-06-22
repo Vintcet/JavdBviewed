@@ -1,6 +1,7 @@
 import { getSettings, saveSettings } from '../../utils/storage';
 import type { ExtensionSettings } from '../../types';
 import { getDisplayVersionInfo } from '../../shared/utils/versionInfo';
+import { getJavDBNoProxyRoute, getJavDBPrimaryRoute } from '../../features/routeManagement';
 
 const DOCS_URL = 'https://jbd.we-together.club/';
 
@@ -164,6 +165,8 @@ function updateTitleLogo(theme: 'light' | 'dark') {
 document.addEventListener('DOMContentLoaded', async () => {
     const dashboardButton = document.getElementById('dashboard-button') as HTMLButtonElement;
     const popupLockBtn = document.getElementById('popup-lock-btn') as HTMLButtonElement;
+    const openJavdbBtn = document.getElementById('open-javdb-btn') as HTMLButtonElement;
+    const openJavdbNoProxyBtn = document.getElementById('open-javdb-noproxy-btn') as HTMLButtonElement;
     const themeSwitcherBtn = document.getElementById('theme-switcher-btn') as HTMLButtonElement;
     const helpBtn = document.getElementById('helpBtn') as HTMLButtonElement;
     const toggleWatchedContainer = document.getElementById('toggleWatchedContainer') as HTMLDivElement;
@@ -297,6 +300,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         } catch (error) {
             console.error('[Popup] Failed to init popup lock button:', error);
+        }
+    }
+
+    async function openRoute(urlPromise: Promise<string>): Promise<void> {
+        try {
+            const url = await urlPromise;
+            await chrome.tabs.create({ url, active: true });
+            window.close();
+        } catch (error) {
+            console.error('[Popup] Failed to open route:', error);
+        }
+    }
+
+    async function initRouteButtons(): Promise<void> {
+        if (openJavdbBtn) {
+            getJavDBPrimaryRoute()
+                .then((url) => { openJavdbBtn.title = `访问 JavDB：${url}`; })
+                .catch(() => {});
+            openJavdbBtn.addEventListener('click', () => {
+                void openRoute(getJavDBPrimaryRoute());
+            });
+        }
+
+        if (openJavdbNoProxyBtn) {
+            getJavDBNoProxyRoute()
+                .then((url) => { openJavdbNoProxyBtn.title = `访问 JavDB 免翻域名：${url}`; })
+                .catch(() => {});
+            openJavdbNoProxyBtn.addEventListener('click', () => {
+                void openRoute(getJavDBNoProxyRoute());
+            });
         }
     }
 
@@ -893,6 +926,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await setupVolumeControl();
         await setupListDisplayControl();
         await initPopupLockButton();
+        await initRouteButtons();
 
         setupHelpPanel();
     }

@@ -447,17 +447,12 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
     routes: {
         javdb: {
             primary: 'https://javdb.com',
+            noProxyUrl: 'https://javdb570.com',
             alternatives: [
-                {
-                    url: 'https://javdb570.com',
-                    enabled: true,
-                    description: '备用线路1',
-                    addedAt: Date.now()
-                },
                 {
                     url: 'https://javdb36.com',
                     enabled: true,
-                    description: '备用线路2',
+                    description: '额外备用线路1',
                     addedAt: Date.now()
                 }
             ]

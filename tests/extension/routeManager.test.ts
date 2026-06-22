@@ -4,6 +4,73 @@ import { DEFAULT_SETTINGS, SERVER_API_BASE_URL } from '../../src/utils/config';
 import { getChromeStorageSnapshot, setChromeStorage } from '../setup/chrome';
 
 describe('RouteManager remote config', () => {
+  it('keeps JavDB primary and no-proxy routes separate', async () => {
+    setChromeStorage({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        routes: {
+          ...(DEFAULT_SETTINGS as any).routes,
+          javdb: {
+            primary: 'javdb-main.example/path',
+            noProxyUrl: 'javdb-free.example/search?q=abc',
+            preferredUrl: 'javdb-free.example/search?q=abc',
+            alternatives: [
+              {
+                url: 'javdb-extra.example/v/abc',
+                enabled: true,
+                description: 'extra route',
+                addedAt: 1,
+              },
+              {
+                url: 'javdb-disabled.example',
+                enabled: false,
+                description: 'disabled route',
+                addedAt: 2,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const {
+      getJavDBNoProxyRoute,
+      getJavDBPrimaryRoute,
+      getRouteManager,
+    } = await import('../../src/features/routeManagement');
+    const routeManager = getRouteManager();
+    routeManager.clearCache();
+
+    await expect(getJavDBPrimaryRoute()).resolves.toBe('https://javdb-main.example');
+    await expect(getJavDBNoProxyRoute()).resolves.toBe('https://javdb-free.example');
+    await expect(routeManager.getCurrentRoute('javdb')).resolves.toBe('https://javdb-free.example');
+    await expect(routeManager.getAllEnabledRoutes('javdb')).resolves.toEqual([
+      'https://javdb-main.example',
+      'https://javdb-free.example',
+      'https://javdb-extra.example',
+    ]);
+  });
+
+  it('uses the default no-proxy route for legacy settings without a separate field', async () => {
+    setChromeStorage({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        routes: {
+          ...(DEFAULT_SETTINGS as any).routes,
+          javdb: {
+            primary: 'https://javdb.com',
+            alternatives: [],
+          },
+        },
+      },
+    });
+
+    const { getJavDBNoProxyRoute, getRouteManager } = await import('../../src/features/routeManagement');
+    getRouteManager().clearCache();
+
+    await expect(getJavDBNoProxyRoute()).resolves.toBe('https://javdb570.com');
+  });
+
   it('updates routes from the server config endpoint before falling back to legacy routes', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -70,12 +137,8 @@ describe('RouteManager remote config', () => {
       }),
     );
     const settings = getChromeStorageSnapshot().settings;
+    expect(settings.routes.javdb.noProxyUrl).toBe('https://javdb-server-alt.example');
     expect(settings.routes.javdb.alternatives).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        url: 'https://javdb-server-alt.example',
-        enabled: true,
-        description: 'server route',
-      }),
       expect.objectContaining({
         url: 'https://user-route.example',
         enabled: true,

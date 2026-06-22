@@ -14,6 +14,27 @@ import { renderDetailLibraryStatus } from '../../features/embyLibrary/content/st
 import type { EmbyLibraryState } from '../../features/embyLibrary/types';
 import { destroySuperRankingNav, initializeSuperRankingNav, isSuperRankingSupportedHost } from '../../features/rankings';
 
+function collectJavdbRouteHosts(routeConfig: any): string[] {
+    const urls = [
+        routeConfig?.primary,
+        routeConfig?.noProxyUrl,
+        ...(Array.isArray(routeConfig?.alternatives)
+            ? routeConfig.alternatives.filter((route: any) => route?.enabled !== false).map((route: any) => route?.url)
+            : []),
+    ];
+    const hosts = new Set<string>();
+    urls.forEach((url) => {
+        const raw = String(url || '').trim();
+        if (!raw) return;
+        const withProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+        try {
+            const hostname = new URL(withProtocol).hostname.toLowerCase();
+            if (hostname) hosts.add(hostname);
+        } catch {}
+    });
+    return Array.from(hosts);
+}
+
 export function installContentMessageRouter(): void {
     try {
         window.addEventListener('actor-state-changed', async () => {
@@ -45,8 +66,9 @@ export function installContentMessageRouter(): void {
                     : loadedSettings;
                 STATE.settings = settings;
                 try {
-                    if (isSuperRankingSupportedHost() && (settings.userExperience as any)?.enableSuperRanking !== false) {
-                        initializeSuperRankingNav();
+                    const javdbRouteHosts = collectJavdbRouteHosts(settings.routes?.javdb);
+                    if (isSuperRankingSupportedHost(window.location.hostname, javdbRouteHosts) && (settings.userExperience as any)?.enableSuperRanking !== false) {
+                        initializeSuperRankingNav(window.location.hostname, javdbRouteHosts);
                     } else {
                         destroySuperRankingNav();
                     }
@@ -75,6 +97,7 @@ export function installContentMessageRouter(): void {
                             enableWideLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableWideLayout !== false,
                             enableSearchBarLayout: (settings.listEnhancement as any)?.listDisplayControl?.enableSearchBarLayout !== false,
                         },
+                        allowedJavdbHosts: collectJavdbRouteHosts(settings.routes?.javdb),
                         popularityEffects: {
                             enabled: (settings.listEnhancement as any)?.popularityEffects?.enabled === true,
                             minRating: Math.max(0, Math.min(5, parseFloat(String((settings.listEnhancement as any)?.popularityEffects?.minRating ?? 4)) || 4)),

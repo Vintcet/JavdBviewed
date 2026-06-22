@@ -95,6 +95,21 @@ describe('list display control UI helpers', () => {
     expect(container.getAttribute('data-x-cols-override')).toBe('true');
   });
 
+  it('allows route-configured JavDB hosts', () => {
+    document.body.innerHTML = '<div class="movie-list h cols-4"></div>';
+
+    const result = applyListDisplayControl({
+      document,
+      window: createWindowLocation('javdb999.com'),
+      control: { enabled: true, columnCount: 4, containerWidth: 100, enableContainerExpansion: true },
+      allowedHosts: ['javdb999.com'],
+      logger: vi.fn(),
+    });
+
+    expect(result.applied).toBe(true);
+    expect(document.getElementById('x-list-display-control')).not.toBeNull();
+  });
+
   it('adds a JHS-style nav search box and restores the original search bar', () => {
     document.body.innerHTML = `
       <nav class="navbar"><div class="navbar-menu"><div class="navbar-end"></div></div></nav>

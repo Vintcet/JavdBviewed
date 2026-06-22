@@ -6,6 +6,7 @@ import {
 } from '../../utils/storage';
 import { requestScheduler as defaultRequestScheduler } from '../../platform/network/requestScheduler';
 import type { RequestSchedulerLike } from './networkMessageHandlers';
+import { getRouteManager } from '../../features/routeManagement';
 
 export interface FetchUserProfileDependencies {
   getValue?: typeof defaultGetValue;
@@ -25,13 +26,14 @@ export async function fetchUserProfileFromJavDB(deps: FetchUserProfileDependenci
 
     const fetchHtml = async (url: string): Promise<{ ok: boolean; html?: string; finalUrl?: string; status?: number }> => {
       try {
+        const origin = new URL(url).origin;
         const res = await requestScheduler.enqueue(url, {
           method: 'GET',
           credentials: 'include' as any,
           headers: {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Referer': 'https://javdb.com/',
+            'Referer': `${origin}/`,
             'Cache-Control': 'no-cache',
           },
         } as RequestInit);
@@ -42,20 +44,34 @@ export async function fetchUserProfileFromJavDB(deps: FetchUserProfileDependenci
       }
     };
 
-    const profileUrl = 'https://javdb.com/users/profile';
-    const profileRes = await fetchHtml(profileUrl);
-    const isLoggedIn = !!(
-      profileRes.ok && profileRes.html && !((profileRes.finalUrl || '').includes('/sign_in'))
-    );
+    const routeManager = getRouteManager();
+    const currentRoute = await routeManager.getCurrentRoute('javdb').catch(() => 'https://javdb.com');
+    const enabledRoutes = await routeManager.getAllEnabledRoutes('javdb').catch(() => ['https://javdb.com']);
+    const routeCandidates = Array.from(new Set([currentRoute, ...enabledRoutes]));
+    let profileRes: { ok: boolean; html?: string; finalUrl?: string; status?: number } | null = null;
+    let profileBaseUrl = '';
 
-    if (!isLoggedIn) {
+    for (const baseUrl of routeCandidates) {
+      const profileUrl = `${baseUrl}/users/profile`;
+      const candidateRes = await fetchHtml(profileUrl);
+      const isLoggedIn = !!(
+        candidateRes.ok && candidateRes.html && !((candidateRes.finalUrl || '').includes('/sign_in'))
+      );
+      if (isLoggedIn) {
+        profileRes = candidateRes;
+        profileBaseUrl = baseUrl;
+        break;
+      }
+    }
+
+    if (!profileRes) {
       throw new Error('未登录 JavDB');
     }
 
     const html = profileRes.html || '';
     const wantCount = parseWantCountFromHtml(html) ?? 0;
     const watchedCount = parseWatchedCountFromHtml(html) ?? 0;
-    const detail = await extractUserInfoDetail(fetchHtml).catch(() => null);
+    const detail = await extractUserInfoDetail(fetchHtml, profileBaseUrl).catch(() => null);
 
     const now = nowFn();
     const profile = {
@@ -98,9 +114,10 @@ function parseWatchedCountFromHtml(html: string): number | undefined {
 
 async function extractUserInfoDetail(
   fetchHtml: (url: string) => Promise<{ ok: boolean; html?: string; finalUrl?: string; status?: number }>,
+  baseUrl = 'https://javdb.com',
 ): Promise<{ email?: string; username?: string; userType?: string } | null> {
   const candidates = [
-    'https://javdb.com/users/profile',
+    `${baseUrl}/users/profile`,
   ];
   for (const url of candidates) {
     try {

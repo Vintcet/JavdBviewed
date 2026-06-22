@@ -47,6 +47,7 @@ const ORIGINAL_LINK_HTML_ATTR = 'jdbSuperRankingOriginalHtml';
 const ORIGINAL_DROPDOWN_HTML_ATTR = 'jdbSuperRankingOriginalHtml';
 const ORIGINAL_FC2_HREF_ATTR = 'jdbSuperRankingOriginalFc2Href';
 let activeSupportedHost = '';
+let activeAllowedHosts: string[] = [];
 
 type SuperRankingMovie = {
   id?: string;
@@ -71,12 +72,15 @@ function normalizeText(value: string | null | undefined): string {
   return String(value || '').replace(/\s+/g, '').trim();
 }
 
-export function isSuperRankingSupportedHost(hostname = window.location.hostname): boolean {
+export function isSuperRankingSupportedHost(hostname = window.location.hostname, extraAllowedHosts: string[] = []): boolean {
   const host = hostname.toLowerCase();
-  return host === 'javdb.com'
-    || host.endsWith('.javdb.com')
-    || host === 'javdb570.com'
-    || host.endsWith('.javdb570.com');
+  const allowedHosts = Array.from(new Set([
+    'javdb.com',
+    'javdb570.com',
+    ...extraAllowedHosts.map(item => String(item || '').trim().toLowerCase()).filter(Boolean),
+  ]));
+  return allowedHosts.some(allowed => host === allowed || host.endsWith(`.${allowed}`))
+    || /^javdb\d+\.com$/.test(host);
 }
 
 function escapeHtml(value: unknown): string {
@@ -448,7 +452,7 @@ async function handleTop250Page(): Promise<boolean> {
 
 export function isSuperRankingTop250Page(): boolean {
   const params = getCurrentUrlParams();
-  return isSuperRankingSupportedHost()
+  return isSuperRankingSupportedHost(window.location.hostname, activeAllowedHosts)
     && window.location.pathname.includes('/advanced_search')
     && params.get('handleTop') === '1';
 }
@@ -528,7 +532,7 @@ export async function handleSuperRankingPage(): Promise<boolean> {
 }
 
 function refreshSuperRankingNav(hostname = activeSupportedHost || window.location.hostname): void {
-  if (!isSuperRankingSupportedHost(hostname)) return;
+  if (!isSuperRankingSupportedHost(hostname, activeAllowedHosts)) return;
   injectStyles();
   applySuperRankingNav();
   rewriteNativeFc2Links();
@@ -791,9 +795,10 @@ export function applySuperRankingNav(): boolean {
   return true;
 }
 
-export function initializeSuperRankingNav(hostname = window.location.hostname): void {
-  if (!isSuperRankingSupportedHost(hostname)) return;
+export function initializeSuperRankingNav(hostname = window.location.hostname, extraAllowedHosts: string[] = []): void {
+  if (!isSuperRankingSupportedHost(hostname, extraAllowedHosts)) return;
   activeSupportedHost = hostname;
+  activeAllowedHosts = extraAllowedHosts;
 
   try {
     injectStyles();
@@ -839,6 +844,7 @@ export function destroySuperRankingNav(): void {
     delete (window as any)[RESTORE_LISTENER_KEY];
   }
   activeSupportedHost = '';
+  activeAllowedHosts = [];
 
   document.getElementById(STYLE_ID)?.remove();
   unbindSpecialPageThemeObserver();

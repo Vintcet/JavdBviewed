@@ -150,6 +150,8 @@ describe('super ranking navigation', () => {
     expect(isSuperRankingSupportedHost('www.javdb.com')).toBe(true);
     expect(isSuperRankingSupportedHost('javdb570.com')).toBe(true);
     expect(isSuperRankingSupportedHost('foo.javdb570.com')).toBe(true);
+    expect(isSuperRankingSupportedHost('javdb36.com')).toBe(true);
+    expect(isSuperRankingSupportedHost('mirror.example', ['mirror.example'])).toBe(true);
     expect(isSuperRankingSupportedHost('javbus.com')).toBe(false);
     expect(isSuperRankingSupportedHost('www.javbus.com')).toBe(false);
   });

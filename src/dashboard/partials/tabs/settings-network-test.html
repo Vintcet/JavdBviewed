@@ -75,13 +75,57 @@
             </div>
                 
             <div class="route-group">
+                <div class="route-endpoint-grid">
+                    <div class="route-endpoint-card">
+                        <div class="route-endpoint-header">
+                            <label class="form-label" for="javdb-primary-route-url">
+                                <i class="fas fa-house"></i> JavDB 主域名
+                            </label>
+                            <span id="javdb-primary-preferred-badge" class="route-preferred-badge" style="display: none;">
+                                <i class="fas fa-star"></i> 默认
+                            </span>
+                        </div>
+                        <div class="route-endpoint-row">
+                            <input type="text" id="javdb-primary-route-url" class="text-input" placeholder="https://javdb.com">
+                            <button id="test-javdb-primary-route" class="btn btn-secondary">
+                                <i class="fas fa-vial"></i> 测试
+                            </button>
+                            <button id="set-javdb-primary-preferred" class="btn btn-secondary">
+                                <i class="fas fa-star"></i> 设为默认
+                            </button>
+                        </div>
+                        <p class="form-hint">用于访问官方 JavDB 主站，popup 的“访问 JavDB”按钮固定读取这里。</p>
+                    </div>
+
+                    <div class="route-endpoint-card">
+                        <div class="route-endpoint-header">
+                            <label class="form-label" for="javdb-noproxy-route-url">
+                                <i class="fas fa-route"></i> JavDB 免翻域名
+                            </label>
+                            <span id="javdb-noproxy-preferred-badge" class="route-preferred-badge" style="display: none;">
+                                <i class="fas fa-star"></i> 默认
+                            </span>
+                        </div>
+                        <div class="route-endpoint-row">
+                            <input type="text" id="javdb-noproxy-route-url" class="text-input" placeholder="https://javdb570.com">
+                            <button id="test-javdb-noproxy-route" class="btn btn-secondary">
+                                <i class="fas fa-vial"></i> 测试
+                            </button>
+                            <button id="set-javdb-noproxy-preferred" class="btn btn-secondary">
+                                <i class="fas fa-star"></i> 设为默认
+                            </button>
+                        </div>
+                        <p class="form-hint">用于免翻访问。扩展会把该域名单独注册为 JavDB 页面，支持内容增强注入。</p>
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label class="form-label">所有线路</label>
+                    <label class="form-label">额外备用线路</label>
                     <div id="javdb-routes-list" class="routes-list">
                         <!-- 动态生成的线路列表 -->
                     </div>
                     <div class="route-add-row">
-                        <input type="text" id="javdb-new-route-url" class="text-input route-url-input" placeholder="输入新的线路 URL，如 https://javdb570.com">
+                        <input type="text" id="javdb-new-route-url" class="text-input route-url-input" placeholder="输入额外备用线路 URL，如 https://javdb36.com">
                         <input type="text" id="javdb-new-route-desc" class="text-input route-desc-input" placeholder="描述（可选）">
                         <button id="add-javdb-route" class="btn btn-secondary">
                             <i class="fas fa-plus"></i> 添加

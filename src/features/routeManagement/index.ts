@@ -79,6 +79,27 @@ interface RouteAlternative {
     addedAt?: number;
 }
 
+interface ServiceRouteConfig {
+    primary: string;
+    preferredUrl?: string;
+    noProxyUrl?: string;
+    alternatives: RouteAlternative[];
+}
+
+export function normalizeRouteUrl(value: string | null | undefined): string | null {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+
+    const withProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+        const url = new URL(withProtocol);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+        return url.origin.replace(/\/$/, '');
+    } catch {
+        return null;
+    }
+}
+
 /**
  * 线路管理器类
  */
@@ -116,8 +137,7 @@ export class RouteManager {
 
         // 从存储获取配置
         const settings = await this.getSettings();
-        const routes = settings.routes || DEFAULT_SETTINGS.routes!;
-        const serviceRoutes = routes[service];
+        const serviceRoutes = this.getServiceRouteConfig(settings, service);
 
         // 优先使用用户设置的首选线路
         let currentRoute = serviceRoutes.preferredUrl || serviceRoutes.primary;
@@ -125,6 +145,7 @@ export class RouteManager {
         // 验证首选线路是否有效（是否在主线路或备用线路中）
         const allRoutes = [
             serviceRoutes.primary,
+            ...(serviceRoutes.noProxyUrl ? [serviceRoutes.noProxyUrl] : []),
             ...serviceRoutes.alternatives.filter((alt: RouteAlternative) => alt.enabled).map((alt: RouteAlternative) => alt.url)
         ];
 
@@ -147,17 +168,20 @@ export class RouteManager {
      */
     async getAllEnabledRoutes(service: ServiceType): Promise<string[]> {
         const settings = await this.getSettings();
-        const routes = settings.routes || DEFAULT_SETTINGS.routes!;
-        const serviceRoutes = routes[service];
+        const serviceRoutes = this.getServiceRouteConfig(settings, service);
 
         const enabledRoutes = [serviceRoutes.primary];
+
+        if (serviceRoutes.noProxyUrl && serviceRoutes.noProxyUrl !== serviceRoutes.primary) {
+            enabledRoutes.push(serviceRoutes.noProxyUrl);
+        }
 
         // 添加所有启用的备用线路
         serviceRoutes.alternatives
             .filter((alt: RouteAlternative) => alt.enabled)
             .forEach((alt: RouteAlternative) => enabledRoutes.push(alt.url));
 
-        return enabledRoutes;
+        return Array.from(new Set(enabledRoutes));
     }
 
     /**
@@ -208,6 +232,65 @@ export class RouteManager {
             this.cache.clear();
             this.cacheExpiry.clear();
         }
+    }
+
+    async getPrimaryRoute(service: ServiceType): Promise<string> {
+        const settings = await this.getSettings();
+        return this.getServiceRouteConfig(settings, service).primary;
+    }
+
+    async getNoProxyRoute(service: ServiceType): Promise<string> {
+        const settings = await this.getSettings();
+        const serviceRoutes = this.getServiceRouteConfig(settings, service);
+        if (serviceRoutes.noProxyUrl && serviceRoutes.noProxyUrl !== serviceRoutes.primary) {
+            return serviceRoutes.noProxyUrl;
+        }
+
+        const preferred = serviceRoutes.preferredUrl;
+        if (preferred && preferred !== serviceRoutes.primary) {
+            return preferred;
+        }
+
+        const firstEnabledAlternative = serviceRoutes.alternatives.find(
+            (alt: RouteAlternative) => alt.enabled && alt.url && alt.url !== serviceRoutes.primary,
+        );
+        return firstEnabledAlternative?.url || serviceRoutes.primary;
+    }
+
+    private getServiceRouteConfig(settings: ExtensionSettings, service: ServiceType): ServiceRouteConfig {
+        const defaultServiceRoutes = (DEFAULT_SETTINGS.routes as any)?.[service] || {};
+        const storedServiceRoutes = (settings.routes as any)?.[service] || {};
+        const primary = normalizeRouteUrl(storedServiceRoutes.primary)
+            || normalizeRouteUrl(defaultServiceRoutes.primary)
+            || (service === 'javdb' ? 'https://javdb.com' : 'https://www.javbus.com');
+        const alternativesSource = Array.isArray(storedServiceRoutes.alternatives)
+            ? storedServiceRoutes.alternatives
+            : Array.isArray(defaultServiceRoutes.alternatives)
+                ? defaultServiceRoutes.alternatives
+                : [];
+
+        const alternatives = alternativesSource
+            .map((alt: RouteAlternative) => {
+                const url = normalizeRouteUrl(alt?.url);
+                if (!url) return null;
+                return {
+                    ...alt,
+                    url,
+                    enabled: alt?.enabled !== false,
+                };
+            })
+            .filter(Boolean) as RouteAlternative[];
+
+        const noProxyUrl = normalizeRouteUrl(storedServiceRoutes.noProxyUrl)
+            || normalizeRouteUrl(defaultServiceRoutes.noProxyUrl);
+        const preferredUrl = normalizeRouteUrl(storedServiceRoutes.preferredUrl);
+
+        return {
+            primary,
+            preferredUrl: preferredUrl || undefined,
+            noProxyUrl: noProxyUrl || undefined,
+            alternatives,
+        };
     }
 
     /**
@@ -411,6 +494,15 @@ export class RouteManager {
         // 处理 JavDB 线路
         const javdbRemote = remoteConfig.services.javdb;
         const javdbCurrent = currentRoutes.javdb;
+        const defaultJavdbNoProxyUrl = normalizeRouteUrl((DEFAULT_SETTINGS.routes as any)?.javdb?.noProxyUrl);
+        const currentJavdbNoProxyUrl = normalizeRouteUrl(javdbCurrent.noProxyUrl);
+        const userDefinedJavdbNoProxyUrl = currentJavdbNoProxyUrl && currentJavdbNoProxyUrl !== defaultJavdbNoProxyUrl
+            ? currentJavdbNoProxyUrl
+            : undefined;
+        const javdbResolvedNoProxyUrl = userDefinedJavdbNoProxyUrl
+            || normalizeRouteUrl(javdbRemote.alternatives[0]?.url)
+            || currentJavdbNoProxyUrl
+            || undefined;
 
         // 获取用户自定义的线路（不在远程配置中的）
         const javdbCustomRoutes = javdbCurrent.alternatives.filter((alt: RouteAlternative) =>
@@ -426,7 +518,7 @@ export class RouteManager {
                 addedAt: Date.parse(remote.addedAt) || Date.now()
             })),
             ...javdbCustomRoutes
-        ];
+        ].filter(route => route.url !== javdbResolvedNoProxyUrl);
 
         // 处理 JavBus 线路
         const javbusRemote = remoteConfig.services.javbus;
@@ -451,6 +543,7 @@ export class RouteManager {
             javdb: {
                 primary: javdbRemote.primary,
                 preferredUrl: javdbCurrent.preferredUrl,
+                noProxyUrl: javdbResolvedNoProxyUrl,
                 alternatives: javdbMergedAlternatives
             },
             javbus: {
@@ -525,6 +618,20 @@ export function getRouteManager(): RouteManager {
  */
 export async function getJavDBRoute(): Promise<string> {
     return getRouteManager().getCurrentRoute('javdb');
+}
+
+/**
+ * 快捷方法：获取 JavDB 主站线路
+ */
+export async function getJavDBPrimaryRoute(): Promise<string> {
+    return getRouteManager().getPrimaryRoute('javdb');
+}
+
+/**
+ * 快捷方法：获取 JavDB 免翻线路
+ */
+export async function getJavDBNoProxyRoute(): Promise<string> {
+    return getRouteManager().getNoProxyRoute('javdb');
 }
 
 /**

@@ -132,8 +132,9 @@ export class DisplaySettings extends BaseSettingsPanel {
             STATE.settings = newSettings;
 
             // 通知所有JavDB标签页设置已更新
-            chrome.tabs.query({ url: '*://javdb.com/*' }, (tabs) => {
+            chrome.tabs.query({}, (tabs) => {
                 tabs.forEach(tab => {
+                    if (!tab.url?.includes('javdb')) return;
                     if (tab.id) {
                         chrome.tabs.sendMessage(tab.id, { type: 'settings-updated' }, () => {
                             if (chrome.runtime.lastError) {

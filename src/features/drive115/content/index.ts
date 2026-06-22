@@ -570,6 +570,7 @@ async function markJavDBAsWatched(stars: number = 4): Promise<void> {
     try {
         // 获取当前页面的URL和CSRF token
         const currentUrl = window.location.href;
+        const currentOrigin = window.location.origin;
         const videoPath = window.location.pathname; // 例如: /v/bKwmOv
 
         // 网络联机性预检查
@@ -591,7 +592,7 @@ async function markJavDBAsWatched(stars: number = 4): Promise<void> {
                 throw new Error('未找到编辑表单或表单信息不完整（#edit_review）');
             }
 
-            const actionPath = formInfo.action.startsWith('http') ? formInfo.action : `https://javdb.com${formInfo.action}`;
+            const actionPath = formInfo.action.startsWith('http') ? formInfo.action : `${currentOrigin}${formInfo.action}`;
             const token = formInfo.token || extractCSRFToken();
             if (!token) {
                 throw new Error('无法获取CSRF token（编辑表单）');
@@ -638,7 +639,7 @@ async function markJavDBAsWatched(stars: number = 4): Promise<void> {
         }
         log(`提取到CSRF token: ${csrfToken.substring(0, 20)}...`);
 
-        const reviewsUrl = `https://javdb.com${videoPath}/reviews`;
+        const reviewsUrl = `${currentOrigin}${videoPath}/reviews`;
         const formData = new URLSearchParams({
             'authenticity_token': csrfToken,
             'video_review[score]': String(stars),

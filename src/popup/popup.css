@@ -106,7 +106,7 @@ body {
 .title-right {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 #titleLogo {
@@ -135,7 +135,8 @@ body {
     border-color: rgba(96, 165, 250, 0.3);
 }
 
-#helpBtn {
+#helpBtn,
+.header-icon-btn {
     width: 28px;
     height: 28px;
     min-width: 28px;
@@ -155,7 +156,8 @@ body {
     line-height: 1;
 }
 
-#helpBtn:hover {
+#helpBtn:hover,
+.header-icon-btn:hover {
     background: var(--surface-secondary);
     border-color: var(--primary);
     color: var(--primary);
@@ -163,23 +165,27 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-#helpBtn:active {
+#helpBtn:active,
+.header-icon-btn:active {
     transform: scale(0.95);
     box-shadow: var(--shadow-sm);
 }
 
-#helpBtn:focus-visible {
+#helpBtn:focus-visible,
+.header-icon-btn:focus-visible {
     outline: none;
     box-shadow: var(--ring);
 }
 
 /* 深色主题下的特殊样式 */
-[data-theme="dark"] #helpBtn {
+[data-theme="dark"] #helpBtn,
+[data-theme="dark"] .header-icon-btn {
     border-color: var(--border-primary);
     background: var(--surface-primary);
 }
 
-[data-theme="dark"] #helpBtn:hover {
+[data-theme="dark"] #helpBtn:hover,
+[data-theme="dark"] .header-icon-btn:hover {
     background: var(--surface-secondary);
     border-color: var(--primary);
 }

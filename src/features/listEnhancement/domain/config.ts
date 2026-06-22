@@ -45,6 +45,7 @@ export interface ListEnhancementConfig {
   showStatusBadge?: boolean;
   enableStatusQuickAction?: boolean;
   popularityEffects?: PopularityEffectsConfig;
+  allowedJavdbHosts?: string[];
 }
 
 export interface VideoPreviewSource {

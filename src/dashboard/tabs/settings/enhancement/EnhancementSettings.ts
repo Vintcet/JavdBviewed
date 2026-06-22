@@ -867,8 +867,9 @@ export class EnhancementSettings extends BaseSettingsPanel {
             STATE.settings = newSettings;
 
             // 通知所有JavDB标签页设置已更新（兼容大小写类型）
-            chrome.tabs.query({ url: '*://javdb.com/*' }, (tabs) => {
+            chrome.tabs.query({}, (tabs) => {
                 tabs.forEach(tab => {
+                    if (!tab.url?.includes('javdb')) return;
                     if (tab.id) {
                         try {
                             console.log('[Enhancement] Broadcasting settings-updated to tab:', { tabId: tab.id, url: tab.url });

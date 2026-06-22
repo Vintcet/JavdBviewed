@@ -1,5 +1,6 @@
 import { getSettings } from '../../utils/storage';
 import { registerEmbyDynamicScripts } from './embyDynamicContentScripts';
+import { normalizeRouteUrl } from '../../features/routeManagement';
 
 let routesTabListener: ((tabId: number, changeInfo: any, tab: chrome.tabs.Tab) => void) | null = null;
 
@@ -11,21 +12,22 @@ export async function registerDynamicContentScripts(showNotification: boolean = 
     const prefixSet = new Set<string>();
 
     if (routes?.javdb) {
-      [routes.javdb.primary, ...(routes.javdb.alternatives?.filter((a: any) => a.enabled && a.url).map((a: any) => a.url) || [])]
+      [
+        routes.javdb.primary,
+        routes.javdb.noProxyUrl,
+        ...(routes.javdb.alternatives?.filter((a: any) => a.enabled && a.url).map((a: any) => a.url) || []),
+      ]
+        .filter(Boolean)
         .forEach((u: string) => {
-          try {
-            const { origin } = new URL(u);
-            prefixSet.add(origin + '/');
-          } catch {}
+          const origin = normalizeRouteUrl(u);
+          if (origin) prefixSet.add(origin + '/');
         });
     }
     if (routes?.javbus) {
       [routes.javbus.primary, ...(routes.javbus.alternatives?.filter((a: any) => a.enabled && a.url).map((a: any) => a.url) || [])]
         .forEach((u: string) => {
-          try {
-            const { origin } = new URL(u);
-            prefixSet.add(origin + '/');
-          } catch {}
+          const origin = normalizeRouteUrl(u);
+          if (origin) prefixSet.add(origin + '/');
         });
     }
 

@@ -7,6 +7,8 @@ import { BaseSettingsPanel } from '../base/BaseSettingsPanel';
 import { showMessage } from '../../../ui/toast';
 import type { ExtensionSettings } from '../../../../types';
 import type { SettingsValidationResult, SettingsSaveResult } from '../types';
+import { DEFAULT_SETTINGS } from '../../../../utils/config';
+import { normalizeRouteUrl } from '../../../../features/routeManagement';
 import {
     getAllEnabledDomains,
     getDomainsByCategory,
@@ -30,6 +32,12 @@ export class NetworkTestSettings extends BaseSettingsPanel {
     private proxyTestResultsDiv!: HTMLDivElement;
 
     // 线路管理相关元素
+    private javdbPrimaryUrlInput!: HTMLInputElement;
+    private javdbNoProxyUrlInput!: HTMLInputElement;
+    private setJavdbPrimaryPreferredBtn!: HTMLButtonElement;
+    private setJavdbNoProxyPreferredBtn!: HTMLButtonElement;
+    private testJavdbPrimaryRouteBtn!: HTMLButtonElement;
+    private testJavdbNoProxyRouteBtn!: HTMLButtonElement;
     private javdbRoutesListDiv!: HTMLDivElement;
     private javdbNewRouteUrlInput!: HTMLInputElement;
     private javdbNewRouteDescInput!: HTMLInputElement;
@@ -87,6 +95,12 @@ export class NetworkTestSettings extends BaseSettingsPanel {
             this.proxyTestResultsDiv = document.getElementById('proxy-test-results') as HTMLDivElement;
 
             // 线路管理相关元素
+            this.javdbPrimaryUrlInput = document.getElementById('javdb-primary-route-url') as HTMLInputElement;
+            this.javdbNoProxyUrlInput = document.getElementById('javdb-noproxy-route-url') as HTMLInputElement;
+            this.setJavdbPrimaryPreferredBtn = document.getElementById('set-javdb-primary-preferred') as HTMLButtonElement;
+            this.setJavdbNoProxyPreferredBtn = document.getElementById('set-javdb-noproxy-preferred') as HTMLButtonElement;
+            this.testJavdbPrimaryRouteBtn = document.getElementById('test-javdb-primary-route') as HTMLButtonElement;
+            this.testJavdbNoProxyRouteBtn = document.getElementById('test-javdb-noproxy-route') as HTMLButtonElement;
             this.javdbRoutesListDiv = document.getElementById('javdb-routes-list') as HTMLDivElement;
             this.javdbNewRouteUrlInput = document.getElementById('javdb-new-route-url') as HTMLInputElement;
             this.javdbNewRouteDescInput = document.getElementById('javdb-new-route-desc') as HTMLInputElement;
@@ -144,6 +158,28 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         }, { signal });
 
         // 线路管理事件绑定
+        this.javdbPrimaryUrlInput?.addEventListener('change', () => {
+            console.log('[NetworkTestSettings] [DEBUG] 主域名变化');
+            this.handleEndpointRouteChange('primary');
+        }, { signal });
+        this.javdbNoProxyUrlInput?.addEventListener('change', () => {
+            console.log('[NetworkTestSettings] [DEBUG] 免翻域名变化');
+            this.handleEndpointRouteChange('noProxyUrl');
+        }, { signal });
+        this.setJavdbPrimaryPreferredBtn?.addEventListener('click', () => {
+            const url = normalizeRouteUrl(this.javdbPrimaryUrlInput?.value);
+            if (url) this.handleSetPreferredRoute('javdb', url);
+        }, { signal });
+        this.setJavdbNoProxyPreferredBtn?.addEventListener('click', () => {
+            const url = normalizeRouteUrl(this.javdbNoProxyUrlInput?.value);
+            if (url) this.handleSetPreferredRoute('javdb', url);
+        }, { signal });
+        this.testJavdbPrimaryRouteBtn?.addEventListener('click', () => {
+            this.handleTestRouteInput(this.javdbPrimaryUrlInput, this.testJavdbPrimaryRouteBtn);
+        }, { signal });
+        this.testJavdbNoProxyRouteBtn?.addEventListener('click', () => {
+            this.handleTestRouteInput(this.javdbNoProxyUrlInput, this.testJavdbNoProxyRouteBtn);
+        }, { signal });
         this.addJavdbRouteBtn?.addEventListener('click', () => {
             console.log('[NetworkTestSettings] [DEBUG] 点击添加线路按钮');
             this.handleAddRoute('javdb');
@@ -286,7 +322,7 @@ export class NetworkTestSettings extends BaseSettingsPanel {
             settings.networkAcceleration = networkAcceleration;
 
             // 保存线路配置（从当前 UI 状态获取）
-            settings.routes = this.getCurrentRoutesConfig();
+            settings.routes = this.getCurrentRoutesConfig(settings.routes);
 
             await this.saveStoredSettings(settings);
             console.log('[NetworkTestSettings] [DEBUG] 设置保存成功');
@@ -514,32 +550,92 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         return proxyMap[service] || proxyMap['ghproxy'];
     }
 
+    private getNormalizedRoutesConfig(settings?: ExtensionSettings): any {
+        const defaultRoutes = (DEFAULT_SETTINGS as any).routes || {};
+        const sourceRoutes = (settings?.routes || {}) as any;
+        const defaultJavdb = defaultRoutes.javdb || {};
+        const sourceJavdb = sourceRoutes.javdb || {};
+        const primary = normalizeRouteUrl(sourceJavdb.primary)
+            || normalizeRouteUrl(defaultJavdb.primary)
+            || 'https://javdb.com';
+
+        const rawAlternatives = Array.isArray(sourceJavdb.alternatives)
+            ? sourceJavdb.alternatives
+            : Array.isArray(defaultJavdb.alternatives)
+                ? defaultJavdb.alternatives
+                : [];
+        const alternativesByUrl = new Map<string, any>();
+        rawAlternatives.forEach((route: any) => {
+            const url = normalizeRouteUrl(route?.url);
+            if (!url) return;
+            alternativesByUrl.set(url, {
+                ...route,
+                url,
+                enabled: route?.enabled !== false,
+                description: route?.description || '',
+                addedAt: route?.addedAt || Date.now(),
+            });
+        });
+
+        const alternatives = Array.from(alternativesByUrl.values());
+        const noProxyUrl = normalizeRouteUrl(sourceJavdb.noProxyUrl)
+            || alternatives.find((route: any) => route.enabled && route.url !== primary)?.url
+            || normalizeRouteUrl(defaultJavdb.noProxyUrl)
+            || '';
+        const filteredAlternatives = alternatives.filter((route: any) =>
+            route.url !== primary && route.url !== noProxyUrl
+        );
+        const preferredUrl = normalizeRouteUrl(sourceJavdb.preferredUrl) || '';
+        const candidateUrls = new Set([
+            primary,
+            noProxyUrl,
+            ...filteredAlternatives.filter((route: any) => route.enabled).map((route: any) => route.url),
+        ].filter(Boolean));
+
+        return {
+            ...defaultRoutes,
+            ...sourceRoutes,
+            javdb: {
+                primary,
+                noProxyUrl,
+                preferredUrl: preferredUrl && candidateUrls.has(preferredUrl) ? preferredUrl : primary,
+                alternatives: filteredAlternatives,
+            },
+            javbus: {
+                ...(defaultRoutes.javbus || {}),
+                ...(sourceRoutes.javbus || {}),
+            },
+        };
+    }
+
+    private updateEndpointPreferredBadges(routeConfig: any): void {
+        const preferredUrl = normalizeRouteUrl(routeConfig?.preferredUrl) || routeConfig?.primary;
+        const primaryBadge = document.getElementById('javdb-primary-preferred-badge') as HTMLElement | null;
+        const noProxyBadge = document.getElementById('javdb-noproxy-preferred-badge') as HTMLElement | null;
+        const primaryUrl = normalizeRouteUrl(this.javdbPrimaryUrlInput?.value);
+        const noProxyUrl = normalizeRouteUrl(this.javdbNoProxyUrlInput?.value);
+
+        if (primaryBadge) {
+            primaryBadge.style.display = primaryUrl && preferredUrl === primaryUrl ? 'inline-flex' : 'none';
+        }
+        if (noProxyBadge) {
+            noProxyBadge.style.display = noProxyUrl && preferredUrl === noProxyUrl ? 'inline-flex' : 'none';
+        }
+    }
+
     /**
      * 加载线路配置
      */
     private async loadRoutesConfig(): Promise<void> {
         const settings = await this.getStoredSettings();
-        const routes = settings.routes || {
-            javdb: {
-                primary: 'https://javdb.com',
-                alternatives: []
-            }
-        };
+        const routes = this.getNormalizedRoutesConfig(settings);
 
-        // 合并主线路和备用线路
-        const allRoutes = [
-            {
-                url: routes.javdb.primary,
-                enabled: true,
-                description: '主线路',
-                isPrimary: true,
-                addedAt: 0
-            },
-            ...routes.javdb.alternatives.map((r: any) => ({ ...r, isPrimary: false }))
-        ];
+        if (this.javdbPrimaryUrlInput) this.javdbPrimaryUrlInput.value = routes.javdb.primary;
+        if (this.javdbNoProxyUrlInput) this.javdbNoProxyUrlInput.value = routes.javdb.noProxyUrl || '';
+        this.updateEndpointPreferredBadges(routes.javdb);
 
         // 渲染所有线路
-        this.renderRoutesList('javdb', allRoutes, routes.javdb);
+        this.renderRoutesList('javdb', routes.javdb.alternatives, routes.javdb);
     }
 
     /**
@@ -549,8 +645,10 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         const listDiv = this.javdbRoutesListDiv;
         if (!listDiv) return;
 
+        listDiv.dataset.preferredUrl = routeConfig.preferredUrl || routeConfig.primary;
+
         if (routes.length === 0) {
-            listDiv.innerHTML = '<p class="routes-empty-hint">暂无线路</p>';
+            listDiv.innerHTML = '<p class="routes-empty-hint">暂无额外备用线路</p>';
             return;
         }
 
@@ -571,6 +669,10 @@ export class NetworkTestSettings extends BaseSettingsPanel {
             const routeItem = document.createElement('div');
             const isPreferred = route.url === preferredUrl;
             routeItem.className = `route-item ${isPreferred ? 'route-item-preferred' : ''}`;
+            routeItem.dataset.url = route.url;
+            routeItem.dataset.enabled = String(route.enabled !== false);
+            routeItem.dataset.description = route.description || '';
+            routeItem.dataset.addedAt = String(route.addedAt || Date.now());
 
             // 获取缓存的延迟信息
             const latencyInfo = this.getRouteLatency(route.url);
@@ -581,7 +683,7 @@ export class NetworkTestSettings extends BaseSettingsPanel {
                     <div class="route-url">
                         ${route.url}
                         ${isPreferred ? '<span class="route-preferred-badge"><i class="fas fa-star"></i> 首选</span>' : ''}
-                        ${!route.enabled && !route.isPrimary ? '<span class="route-disabled-badge"><i class="fas fa-ban"></i> 已禁用</span>' : ''}
+                        ${!route.enabled ? '<span class="route-disabled-badge"><i class="fas fa-ban"></i> 已禁用</span>' : ''}
                         ${latencyHtml}
                     </div>
                     ${route.description ? `<div class="route-description">${route.description}</div>` : ''}
@@ -593,17 +695,17 @@ export class NetworkTestSettings extends BaseSettingsPanel {
                     <button class="btn btn-sm btn-secondary" data-action="test" data-url="${route.url}">
                         <i class="fas fa-vial"></i> 测试
                     </button>
-                    ${!route.isPrimary ? `<button class="btn btn-sm ${route.enabled ? 'btn-warning' : 'btn-success'}" data-action="toggle" data-url="${route.url}" data-enabled="${route.enabled}">
+                    <button class="btn btn-sm ${route.enabled ? 'btn-warning' : 'btn-success'}" data-action="toggle" data-url="${route.url}" data-enabled="${route.enabled}">
                         <i class="fas ${route.enabled ? 'fa-ban' : 'fa-check'}"></i> ${route.enabled ? '禁用' : '启用'}
-                    </button>` : ''}
-                    ${!route.isPrimary ? `<button class="btn btn-sm btn-danger" data-action="delete" data-url="${route.url}">
+                    </button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-url="${route.url}">
                         <i class="fas fa-trash"></i>
-                    </button>` : ''}
+                    </button>
                 </div>
             `;
 
             // 禁用的线路整体变灰
-            if (!route.enabled && !route.isPrimary) {
+            if (!route.enabled) {
                 routeItem.style.opacity = '0.5';
             }
 
@@ -612,7 +714,7 @@ export class NetworkTestSettings extends BaseSettingsPanel {
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', () => {
                     const currentEnabled = toggleBtn.dataset.enabled === 'true';
-                    this.handleToggleRoute(service, route.url, route.isPrimary, !currentEnabled);
+                    this.handleToggleRoute(service, route.url, false, !currentEnabled);
                 });
             }
 
@@ -700,48 +802,113 @@ export class NetworkTestSettings extends BaseSettingsPanel {
     /**
      * 获取当前线路配置
      */
-    private getCurrentRoutesConfig(): any {
-        // 从 UI 状态构建配置对象
+    private getCurrentRoutesConfig(existingRoutes?: any): any {
+        const baseRoutes = this.getNormalizedRoutesConfig({ routes: existingRoutes || (DEFAULT_SETTINGS as any).routes } as ExtensionSettings);
+        const primary = normalizeRouteUrl(this.javdbPrimaryUrlInput?.value) || baseRoutes.javdb.primary;
+        const noProxyUrl = normalizeRouteUrl(this.javdbNoProxyUrlInput?.value) || baseRoutes.javdb.noProxyUrl;
         const javdbRoutes: any[] = [];
 
         // 获取 JavDB 线路
         if (this.javdbRoutesListDiv) {
             const items = this.javdbRoutesListDiv.querySelectorAll('.route-item');
             items.forEach((item) => {
-                const checkbox = item.querySelector('input[type="checkbox"]') as HTMLInputElement;
-                const urlDiv = item.querySelector('.route-url') as HTMLDivElement;
-                const descDiv = item.querySelector('.route-description') as HTMLDivElement;
-                const isPrimary = checkbox.dataset.isPrimary === 'true';
-
-                // 提取 URL（移除首选徽章和延迟徽章）
-                let urlText = urlDiv.textContent?.trim() || '';
-                const badgeIndex = urlText.indexOf('首选');
-                if (badgeIndex > 0) {
-                    urlText = urlText.substring(0, badgeIndex).trim();
-                }
-                // 移除延迟信息
-                const latencyMatch = urlText.match(/^(https?:\/\/[^\s]+)/);
-                if (latencyMatch) {
-                    urlText = latencyMatch[1];
-                }
-
-                if (!isPrimary) {
+                const element = item as HTMLElement;
+                const url = normalizeRouteUrl(element.dataset.url);
+                if (url && url !== primary && url !== noProxyUrl) {
                     javdbRoutes.push({
-                        url: urlText,
-                        enabled: checkbox.checked,
-                        description: descDiv ? descDiv.textContent?.trim() : '',
-                        addedAt: Date.now()
+                        url,
+                        enabled: element.dataset.enabled !== 'false',
+                        description: element.dataset.description || '',
+                        addedAt: Number(element.dataset.addedAt) || Date.now()
                     });
                 }
             });
         }
 
+        const candidateUrls = new Set([
+            primary,
+            noProxyUrl,
+            ...javdbRoutes.filter((route: any) => route.enabled).map((route: any) => route.url),
+        ].filter(Boolean));
+        const existingPreferredUrl = normalizeRouteUrl(this.javdbRoutesListDiv?.dataset.preferredUrl)
+            || normalizeRouteUrl(existingRoutes?.javdb?.preferredUrl)
+            || primary;
+        const preferredUrl = candidateUrls.has(existingPreferredUrl) ? existingPreferredUrl : primary;
+
         return {
+            ...baseRoutes,
             javdb: {
-                primary: 'https://javdb.com',
+                primary,
+                noProxyUrl,
+                preferredUrl,
                 alternatives: javdbRoutes
             }
         };
+    }
+
+    private async handleEndpointRouteChange(field: 'primary' | 'noProxyUrl'): Promise<void> {
+        const input = field === 'primary' ? this.javdbPrimaryUrlInput : this.javdbNoProxyUrlInput;
+        const label = field === 'primary' ? '主域名' : '免翻域名';
+        const normalizedUrl = normalizeRouteUrl(input?.value);
+
+        if (!normalizedUrl) {
+            showMessage(`${label} URL 格式不正确`, 'error');
+            await this.loadRoutesConfig();
+            return;
+        }
+        const otherInput = field === 'primary' ? this.javdbNoProxyUrlInput : this.javdbPrimaryUrlInput;
+        const otherUrl = normalizeRouteUrl(otherInput?.value);
+        if (otherUrl && otherUrl === normalizedUrl) {
+            showMessage('主域名和免翻域名不能相同', 'warn');
+            await this.loadRoutesConfig();
+            return;
+        }
+
+        const settings = await this.getStoredSettings();
+        const routes = this.getCurrentRoutesConfig(settings.routes);
+        routes.javdb[field] = normalizedUrl;
+
+        if (routes.javdb.preferredUrl && routes.javdb.preferredUrl !== normalizedUrl) {
+            const candidateUrls = new Set([
+                routes.javdb.primary,
+                routes.javdb.noProxyUrl,
+                ...routes.javdb.alternatives.filter((route: any) => route.enabled).map((route: any) => route.url),
+            ]);
+            if (!candidateUrls.has(routes.javdb.preferredUrl)) {
+                routes.javdb.preferredUrl = routes.javdb.primary;
+            }
+        }
+
+        settings.routes = routes;
+        await this.saveStoredSettings(settings);
+        await this.loadRoutesConfig();
+        showMessage(`${label}已保存`, 'success');
+    }
+
+    private async handleTestRouteInput(input: HTMLInputElement, button: HTMLButtonElement): Promise<void> {
+        const url = normalizeRouteUrl(input?.value);
+        if (!url) {
+            showMessage('URL 格式不正确', 'error');
+            return;
+        }
+
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 测试中';
+
+        const startTime = Date.now();
+        try {
+            await fetch(url, { method: 'HEAD', mode: 'no-cors', cache: 'no-cache' });
+            const latency = Date.now() - startTime;
+            this.saveRouteLatency(url, latency);
+            showMessage(`线路可用，延迟 ${latency}ms`, 'success');
+        } catch {
+            this.saveRouteLatency(url, -1);
+            showMessage(`线路不可用，耗时 ${Date.now() - startTime}ms`, 'error');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
     }
 
     /**
@@ -751,35 +918,25 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         const urlInput = this.javdbNewRouteUrlInput;
         const descInput = this.javdbNewRouteDescInput;
 
-        const url = urlInput?.value.trim();
+        const url = normalizeRouteUrl(urlInput?.value);
         if (!url) {
-            showMessage('请输入线路 URL', 'warn');
-            return;
-        }
-
-        // 验证 URL 格式
-        try {
-            new URL(url);
-        } catch {
-            showMessage('URL 格式不正确', 'error');
+            showMessage('请输入正确的线路 URL', 'warn');
             return;
         }
 
         const settings = await this.getStoredSettings();
-        if (!settings.routes) {
-            settings.routes = {
-                javdb: { primary: 'https://javdb.com', alternatives: [] },
-                javbus: { primary: 'https://www.javbus.com', alternatives: [] }
-            };
-        }
+        const routes = this.getCurrentRoutesConfig(settings.routes);
 
-        // 检查是否已存在（包括主线路）
-        if (url === settings.routes[service].primary) {
-            showMessage('该线路已存在（主线路）', 'warn');
+        if (url === routes[service].primary) {
+            showMessage('该线路已存在（主域名）', 'warn');
+            return;
+        }
+        if (url === routes[service].noProxyUrl) {
+            showMessage('该线路已存在（免翻域名）', 'warn');
             return;
         }
 
-        const existingRoutes = settings.routes[service].alternatives;
+        const existingRoutes = routes[service].alternatives;
         if (existingRoutes.some((r: { url: string }) => r.url === url)) {
             showMessage('该线路已存在', 'warn');
             return;
@@ -793,6 +950,7 @@ export class NetworkTestSettings extends BaseSettingsPanel {
             addedAt: Date.now()
         });
 
+        settings.routes = routes;
         await this.saveStoredSettings(settings);
         await this.loadRoutesConfig();
 
@@ -813,11 +971,12 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         }
 
         const settings = await this.getStoredSettings();
-        if (!settings.routes) return;
+        const routes = this.getCurrentRoutesConfig(settings.routes);
 
-        const route = settings.routes[service].alternatives.find((r: any) => r.url === url);
+        const route = routes[service].alternatives.find((r: any) => r.url === url);
         if (route) {
             route.enabled = enabled;
+            settings.routes = routes;
             await this.saveStoredSettings(settings);
             await this.loadRoutesConfig();
             showMessage(enabled ? `已启用 ${url}` : `已禁用 ${url}`, 'success');
@@ -828,15 +987,21 @@ export class NetworkTestSettings extends BaseSettingsPanel {
      * 处理设置首选线路
      */
     private async handleSetPreferredRoute(service: 'javdb', url: string): Promise<void> {
+        const normalizedUrl = normalizeRouteUrl(url);
+        if (!normalizedUrl) {
+            showMessage('URL 格式不正确', 'error');
+            return;
+        }
         const settings = await this.getStoredSettings();
-        if (!settings.routes) return;
+        const routes = this.getCurrentRoutesConfig(settings.routes);
 
-        settings.routes[service].preferredUrl = url;
+        routes[service].preferredUrl = normalizedUrl;
+        settings.routes = routes;
 
         await this.saveStoredSettings(settings);
         await this.loadRoutesConfig();
 
-        showMessage(`已将 ${url} 设为首选线路`, 'success');
+        showMessage(`已将 ${normalizedUrl} 设为默认线路`, 'success');
 
         // 清除路由管理器的缓存，使新的首选线路立即生效
         const { getRouteManager } = await import('../../../../features/routeManagement');
@@ -850,11 +1015,15 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         if (!confirm('确定要删除这条线路吗？')) return;
 
         const settings = await this.getStoredSettings();
-        if (!settings.routes) return;
+        const routes = this.getCurrentRoutesConfig(settings.routes);
 
-        const index = settings.routes[service].alternatives.findIndex((r: any) => r.url === url);
+        const index = routes[service].alternatives.findIndex((r: any) => r.url === url);
         if (index >= 0) {
-            settings.routes[service].alternatives.splice(index, 1);
+            routes[service].alternatives.splice(index, 1);
+            if (routes[service].preferredUrl === url) {
+                routes[service].preferredUrl = routes[service].primary;
+            }
+            settings.routes = routes;
             await this.saveStoredSettings(settings);
             await this.loadRoutesConfig();
             showMessage('线路已删除', 'success');
@@ -937,19 +1106,16 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         if (spinner) spinner.classList.remove('hidden');
 
         const settings = await this.getStoredSettings();
-        if (!settings.routes) {
-            showMessage('未找到线路配置', 'error');
-            this.testAllRoutesBtn.disabled = false;
-            if (buttonText) buttonText.textContent = '测试所有线路';
-            if (spinner) spinner.classList.add('hidden');
-            return;
-        }
+        const routes = this.getCurrentRoutesConfig(settings.routes);
 
         // 获取所有线路（包括主线路）
         const allRoutes = [
-            { url: settings.routes.javdb.primary, description: '主线路' },
-            ...settings.routes.javdb.alternatives
-        ];
+            { url: routes.javdb.primary, description: '主域名' },
+            ...(routes.javdb.noProxyUrl ? [{ url: routes.javdb.noProxyUrl, description: '免翻域名' }] : []),
+            ...routes.javdb.alternatives
+        ].filter((route, index, arr) =>
+            route.url && arr.findIndex((item) => item.url === route.url) === index
+        );
 
         showMessage(`开始测试 ${allRoutes.length} 条线路...`, 'info');
 
@@ -1027,11 +1193,13 @@ export class NetworkTestSettings extends BaseSettingsPanel {
         settings.routes = {
             javdb: {
                 primary: 'https://javdb.com',
+                noProxyUrl: 'https://javdb570.com',
+                preferredUrl: 'https://javdb.com',
                 alternatives: [
                     {
-                        url: 'https://javdb570.com',
+                        url: 'https://javdb36.com',
                         enabled: true,
-                        description: '备用线路',
+                        description: '备用线路2',
                         addedAt: Date.now()
                     }
                 ]
