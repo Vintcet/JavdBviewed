@@ -8,6 +8,7 @@ import { magnetSearchManager } from '../../features/magnets';
 import { listEnhancementManager } from '../../features/listEnhancement';
 import { actorEnhancementManager } from '../../features/actorEnhancement';
 import { stopPreviewVideoWatcher } from '../../features/previews';
+import { processVisibleItems, setupObserver } from '../../features/listEnhancement/content/itemProcessor';
 
 export function exposeContentDebugManagers(): void {
     if (typeof window === 'undefined') return;
@@ -47,6 +48,16 @@ export function installContentLifecycleHandlers(): void {
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             log('[Performance] Page hidden, reducing resource usage');
+            try {
+                if (STATE.debounceTimer) {
+                    clearTimeout(STATE.debounceTimer);
+                    STATE.debounceTimer = null;
+                }
+                STATE.observer?.disconnect();
+                STATE.observer = null;
+                listEnhancementManager.suspend();
+                stopPreviewVideoWatcher();
+            } catch {}
             performanceOptimizer?.updateConfig({
                 maxConcurrentRequests: 1,
                 domBatchSize: 2,
@@ -65,6 +76,11 @@ export function installContentLifecycleHandlers(): void {
         } else {
             log('[Performance] Page visible, restoring normal resource usage');
             try {
+                listEnhancementManager.resume();
+                if (!STATE.observer && document.querySelector('.movie-list')) {
+                    processVisibleItems({ enqueueRealtimeCheck: false });
+                    setupObserver();
+                }
                 const s = STATE.settings as any;
                 const mc = (s?.magnetSearch?.concurrency?.pageMaxConcurrentRequests ?? 2) as number;
                 performanceOptimizer?.updateConfig({

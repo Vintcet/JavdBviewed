@@ -705,6 +705,29 @@ async function initialize(): Promise<void> {
 
 // 防止重复初始化
 let isInitialized = false;
+let initializeDeferredUntilVisible = false;
+
+function deferInitializeUntilVisible(): boolean {
+    if (document.visibilityState === 'visible') {
+        return false;
+    }
+    if (initializeDeferredUntilVisible) {
+        return true;
+    }
+
+    initializeDeferredUntilVisible = true;
+    const resume = () => {
+        if (document.visibilityState !== 'visible') {
+            return;
+        }
+        document.removeEventListener('visibilitychange', resume);
+        initializeDeferredUntilVisible = false;
+        initialize().catch(err => console.error('[JavDB Ext] Deferred initialization failed:', err));
+    };
+    document.addEventListener('visibilitychange', resume);
+    log('[Performance] Page enhancement initialization deferred until tab becomes visible');
+    return true;
+}
 
 export function onExecute() {
     if (isInitialized) {
@@ -716,5 +739,8 @@ export function onExecute() {
     (window as any).__javdbExtensionInjected = true;
     // 立即注入顶栏标识，不等待编排器
     injectNavbarBadge();
+    if (deferInitializeUntilVisible()) {
+        return;
+    }
     initialize().catch(err => console.error('[JavDB Ext] Initialization failed:', err));
 }

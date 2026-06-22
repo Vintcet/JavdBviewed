@@ -26,13 +26,17 @@ export function createImageHoverPreviewController(options: {
   window: Window;
   maxWidth?: number;
   maxHeight?: number;
+  showDelayMs?: number;
 }): ImageHoverPreviewController {
   const maxWidth = options.maxWidth ?? 1000;
   const maxHeight = options.maxHeight ?? 1000;
+  const showDelayMs = options.showDelayMs ?? 1000;
   const offset = 20;
   const bound = new Map<HTMLImageElement, BoundHandlers>();
   let preview: HTMLDivElement | null = null;
   let activeImage: HTMLImageElement | null = null;
+  let showTimer: number | null = null;
+  let lastMouseEvent: MouseEvent | null = null;
 
   function ensureStyles(): void {
     if (options.document.getElementById('x-image-hover-preview-styles')) return;
@@ -116,6 +120,10 @@ export function createImageHoverPreviewController(options: {
   }
 
   function hide(): void {
+    if (showTimer !== null) {
+      options.window.clearTimeout(showTimer);
+      showTimer = null;
+    }
     if (!preview) return;
     preview.classList.remove('active', 'loading');
     preview.style.display = 'none';
@@ -153,14 +161,28 @@ export function createImageHoverPreviewController(options: {
     largeImage.src = url;
   }
 
+  function scheduleShow(event: MouseEvent, image: HTMLImageElement): void {
+    lastMouseEvent = event;
+    if (showTimer !== null) {
+      options.window.clearTimeout(showTimer);
+    }
+    showTimer = options.window.setTimeout(() => {
+      showTimer = null;
+      show(lastMouseEvent || event, image);
+    }, showDelayMs);
+  }
+
   function attach(coverElement: HTMLElement): void {
     const image = coverElement.querySelector<HTMLImageElement>('img');
     if (!image || bound.has(image)) return;
 
     const handlers: BoundHandlers = {
-      enter: (event) => show(event, image),
+      enter: (event) => scheduleShow(event, image),
       leave: () => hide(),
-      move,
+      move: (event) => {
+        lastMouseEvent = event;
+        move(event);
+      },
     };
     image.addEventListener('mouseenter', handlers.enter);
     image.addEventListener('mouseleave', handlers.leave);
@@ -176,6 +198,7 @@ export function createImageHoverPreviewController(options: {
     });
     bound.clear();
     hide();
+    lastMouseEvent = null;
     preview?.remove();
     preview = null;
   }

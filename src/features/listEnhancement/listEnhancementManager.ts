@@ -120,6 +120,8 @@ class ListEnhancementManager {
     getSubscriptions: () => newWorksManager.getSubscriptions(),
     logger: (...args) => log(...args),
   });
+  private listItemsObserver: MutationObserver | null = null;
+  private isSuspended = false;
   // 演员水印样式注入标记
   private watermarkStylesInjected = false;
   private popularityStylesInjected = false;
@@ -369,6 +371,7 @@ class ListEnhancementManager {
     if (!this.config.enabled) {
       return;
     }
+    this.isSuspended = false;
 
     log('Initializing list enhancement features...');
 
@@ -417,7 +420,10 @@ class ListEnhancementManager {
   }
 
   private observeNewItems(): void {
-    observeListItems({
+    if (this.listItemsObserver) {
+      return;
+    }
+    this.listItemsObserver = observeListItems({
       document,
       enhanceItem: item => this.enhanceItem(item),
       onNewItems: () => this.processContainerAttributes(),
@@ -436,6 +442,10 @@ class ListEnhancementManager {
   }
 
   private enhanceItem(item: HTMLElement): void {
+    if (this.isSuspended) {
+      return;
+    }
+
     // 避免重复处理
     if (item.hasAttribute('data-list-enhanced')) {
       return;
@@ -596,6 +606,41 @@ class ListEnhancementManager {
 
   private cleanupScrollPaging(): void {
     this.scrollPagingController.cleanup();
+  }
+
+  public suspend(): void {
+    if (this.isSuspended) return;
+    this.isSuspended = true;
+    try {
+      this.listItemsObserver?.disconnect();
+      this.listItemsObserver = null;
+      this.cleanupScrollPaging();
+      this.imageHoverPreviewController.destroy();
+      document.querySelectorAll<HTMLVideoElement>('.x-preview video, .x-preview-video').forEach(video => {
+        try {
+          releasePreviewVideoMedia(video);
+        } catch {}
+      });
+    } catch (error) {
+      log('Failed to suspend list enhancement:', error);
+    }
+  }
+
+  public resume(): void {
+    if (!this.config.enabled) return;
+    if (!this.isSuspended && this.listItemsObserver) return;
+    this.isSuspended = false;
+    try {
+      this.observeNewItems();
+      this.reapplyImageHoverPreviewForAll();
+      if (this.config.enableScrollPaging) {
+        this.initScrollPaging();
+      }
+      processVisibleItems({ enqueueRealtimeCheck: false });
+      this.processContainerAttributes();
+    } catch (error) {
+      log('Failed to resume list enhancement:', error);
+    }
   }
 }
 

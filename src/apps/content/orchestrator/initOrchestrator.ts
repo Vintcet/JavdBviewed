@@ -57,6 +57,7 @@ class InitOrchestrator {
   // P0 FIX: hidden 页 lease 泄漏保护
   private hiddenLeaseTasks = new Map<string, number>(); // taskId -> hiddenAt timestamp
   private readonly hiddenLeaseReleaseMs = 60_000;  // hidden 超过 60s 记录诊断信息
+  private lifecycleTimersStarted = false;
 
   private readonly metrics = new OrchestratorMetricsState();
 
@@ -68,6 +69,11 @@ class InitOrchestrator {
   constructor() {
     // 根据设备性能动态调整并发数
     this.adjustConcurrencyByHardware();
+  }
+
+  private startLifecycleTimers(): void {
+    if (this.lifecycleTimersStarted) return;
+    this.lifecycleTimersStarted = true;
     // P0 FIX: 启动老化检测（每 2s 检查一次卡住的任务）
     this.startStallDetection();
     // P0 FIX: 启动 hidden lease 泄漏保护
@@ -364,6 +370,8 @@ class InitOrchestrator {
   private metricsSaveTimeout?: number;
 
   async add(phase: InitPhase, task: InitTask, options: InitTaskOptions = {}): Promise<void> {
+    this.startLifecycleTimers();
+
     if (options.label) {
       const existingTask = this.phases[phase].find((scheduledTask) => (scheduledTask.options.label || '') === options.label);
       if (existingTask) {
@@ -738,6 +746,7 @@ class InitOrchestrator {
 
   async run(): Promise<void> {
     if (this.started) return;
+    this.startLifecycleTimers();
     this.started = true;
     this.t0 = performance.now();
     await this.preregisterAllManagedTasks();
