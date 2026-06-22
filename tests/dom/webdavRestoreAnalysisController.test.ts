@@ -83,7 +83,7 @@ function createController(overrides: Partial<ConstructorParameters<typeof WebDAV
     queryInModal: (selector) => document.querySelector(selector),
     hideElement: (id) => document.getElementById(id)?.classList.add('hidden'),
     showElement: (id) => document.getElementById(id)?.classList.remove('hidden'),
-    getSelectedFile: () => ({ name: 'javdb-extension-backup-2026-06-01.zip', path: '/backup.zip' }),
+    getSelectedFile: () => ({ name: 'my-javdb-backup-2026-06-01.zip', path: '/backup.zip' }),
     setCloudData: (data) => {
       cloudData = data;
     },

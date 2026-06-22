@@ -160,7 +160,7 @@ export async function fetchLatestRelease(includePrerelease = false): Promise<Git
     const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
     
     const resp = await fetch(
-      'https://api.github.com/repos/Adsryen/JavdBviewed/releases',
+      'https://api.github.com/repos/Vintcet/my-javdb/releases',
       { 
         headers: { 
           'Accept': 'application/vnd.github+json',
@@ -219,7 +219,7 @@ async function fetchLatestReleaseFromJsDelivr(): Promise<GitHubRelease | null> {
     
     // 使用 jsdelivr 的 API 获取所有版本
     const resp = await fetch(
-      'https://data.jsdelivr.com/v1/packages/gh/Adsryen/JavdBviewed',
+      'https://data.jsdelivr.com/v1/packages/gh/Vintcet/my-javdb',
       {
         signal: controller.signal,
         cache: 'no-cache'
@@ -240,7 +240,7 @@ async function fetchLatestReleaseFromJsDelivr(): Promise<GitHubRelease | null> {
       const latestTag = tags[0];
       
       return {
-        html_url: 'https://github.com/Adsryen/JavdBviewed/releases/latest',
+        html_url: 'https://github.com/Vintcet/my-javdb/releases/latest',
         tag_name: latestTag,
         name: latestTag,
         prerelease: false,
@@ -266,7 +266,7 @@ async function fetchLatestReleaseFromGitHubPage(): Promise<GitHubRelease | null>
     
     // 直接访问 latest release 页面，GitHub 会重定向到最新版本
     const resp = await fetch(
-      'https://github.com/Adsryen/JavdBviewed/releases/latest',
+      'https://github.com/Vintcet/my-javdb/releases/latest',
       {
         signal: controller.signal,
         redirect: 'follow'

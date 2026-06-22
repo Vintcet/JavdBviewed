@@ -80,7 +80,7 @@ async function main() {
 
         // Get version and define zip path
         const version = await getVersion();
-        const zipName = `javdb-extension-v${version}.zip`;
+        const zipName = `my-javdb-v${version}.zip`;
         const zipPath = resolve(distZipDir, zipName);
 
         // Create a zip file of the dist directory contents

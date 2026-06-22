@@ -178,7 +178,7 @@ export function initSidebarActions(): void {
         const url = URL.createObjectURL(dataBlob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = `javdb-extension-backup-${new Date().toISOString().split('T')[0]}.json`;
+        anchor.download = `my-javdb-backup-${new Date().toISOString().split('T')[0]}.json`;
         anchor.click();
         URL.revokeObjectURL(url);
         showMessage('数据导出成功', 'success');

@@ -82,7 +82,7 @@ export function formatRelativeTime(dateString: string, now: Date = new Date()): 
 }
 
 export function parseDateFromFilename(filename: string): Date | null {
-  const match = filename.match(/javdb-extension-backup-(\d{4}-\d{2}-\d{2})(?:-(\d{2})-(\d{2})-(\d{2}))?\.(?:json|zip)$/i);
+  const match = filename.match(/(?:my-javdb|javdb-extension)-backup-(\d{4}-\d{2}-\d{2})(?:-(\d{2})-(\d{2})-(\d{2}))?\.(?:json|zip)$/i);
   if (!match) return null;
   const datePart = match[1];
   const h = match[2] || '00';

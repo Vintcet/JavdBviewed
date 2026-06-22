@@ -26,12 +26,12 @@ export function injectNavbarBadge(): void {
                 white-space: nowrap;
                 cursor: default;
                 user-select: none;
-            " title="Jav 助手已启用">
+            " title="My JavDB已启用">
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none" style="flex-shrink:0">
                     <circle cx="4" cy="4" r="4" fill="#3b82f6" opacity="0.4"/>
                     <circle cx="4" cy="4" r="2.5" fill="#60a5fa"/>
                 </svg>
-                Jav 助手已启用
+                My JavDB已启用
             </span>
         `;
 

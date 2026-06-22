@@ -55,7 +55,7 @@ describe('release announcement modal', () => {
     await mountReleaseAnnouncementModal();
 
     const modal = document.querySelector<HTMLElement>('.jdb-release-announcement-modal');
-    expect(modal?.textContent).toContain('Jav 助手已更新');
+    expect(modal?.textContent).toContain('My JavDB已更新');
     expect(modal?.textContent).toContain('v1.20.2');
     expect(modal?.textContent).toContain('影片页新增在线可看、外部搜索和字幕搜索入口');
     expect(modal?.textContent).toContain('磁力升级多源聚合');
@@ -132,7 +132,7 @@ describe('release announcement modal', () => {
     await mountDashboardReleaseAnnouncement();
 
     const modal = document.querySelector<HTMLElement>('.jdb-release-announcement-modal');
-    expect(modal?.textContent).toContain('Jav 助手已更新');
+    expect(modal?.textContent).toContain('My JavDB已更新');
     expect(modal?.textContent).toContain('v1.20.2');
     expect(storageState[RELEASE_ANNOUNCEMENT_STORAGE_KEY]).toEqual({
       pending: expect.objectContaining({
@@ -149,7 +149,7 @@ describe('release announcement modal', () => {
     await mountDashboardReleaseAnnouncement();
 
     const modal = document.querySelector<HTMLElement>('.jdb-release-announcement-modal');
-    expect(modal?.textContent).toContain('欢迎使用 Jav 助手');
+    expect(modal?.textContent).toContain('欢迎使用 My JavDB');
     expect(storageState[RELEASE_ANNOUNCEMENT_STORAGE_KEY]).toEqual({
       pending: expect.objectContaining({
         type: 'install',

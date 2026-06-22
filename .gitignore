@@ -6,6 +6,7 @@ node_modules/
 dist/
 dist-*
 coverage/
+.vitest-cache/
 *.local
 *.tsbuildinfo
 

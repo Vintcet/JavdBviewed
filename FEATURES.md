@@ -1,6 +1,6 @@
-# JavdBviewed 完整功能清单
+# My JavDB 完整功能清单
 
-> 本文档详细列出了 JavdBviewed 扩展的所有功能特性。
+> 本文档详细列出了 My JavDB 扩展的所有功能特性。
 
 **图例说明**：✅ 已实现 | 🚧 开发中 | 📋 计划中 | 🔧 测试中 | ⚠️ 实验性
 
@@ -1789,8 +1789,8 @@
 ## 💬 反馈与建议
 
 如果您有任何功能建议或发现问题，欢迎：
-- 💬 提交 [Issue](https://github.com/Adsryen/JavdBviewed/issues)
-- 🗨️ 发起 [Discussion](https://github.com/Adsryen/JavdBviewed/discussions)
+- 💬 提交 [Issue](https://github.com/Vintcet/my-javdb/issues)
+- 🗨️ 发起 [Discussion](https://github.com/Vintcet/my-javdb/discussions)
 
 ---
 

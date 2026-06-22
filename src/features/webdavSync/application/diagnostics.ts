@@ -51,7 +51,7 @@ export async function testWebDAVConnectionWithConfig(
       Authorization: 'Basic ' + btoa(`${config.username}:${config.password}`),
       Depth: '0',
       'Content-Type': 'application/xml; charset=utf-8',
-      'User-Agent': 'JavDB-Extension/1.0',
+      'User-Agent': 'My-JavDB/1.0',
     };
 
     const xmlBody = `<?xml version="1.0" encoding="utf-8"?>\n<D:propfind xmlns:D="DAV:">\n    <D:prop>\n        <D:resourcetype/>\n        <D:getcontentlength/>\n        <D:getlastmodified/>\n    </D:prop>\n</D:propfind>`;

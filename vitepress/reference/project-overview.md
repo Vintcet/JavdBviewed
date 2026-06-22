@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-Jav 助手是一个面向 JavDB 等站点的浏览器扩展，提供视频状态标记、数据管理、WebDAV 同步、115 v2 离线下载集成、演员管理、页面增强、AI 翻译等能力。
+My JavDB是一个面向 JavDB 等站点的浏览器扩展，提供视频状态标记、数据管理、WebDAV 同步、115 v2 离线下载集成、演员管理、页面增强、AI 翻译等能力。
 
 ## 核心能力
 
@@ -24,8 +24,8 @@ Jav 助手是一个面向 JavDB 等站点的浏览器扩展，提供视频状态
 
 ### 下载预编译版本
 
-1. 打开 [GitHub Releases](https://github.com/Adsryen/JavdBviewed/releases)
-2. 下载最新的 `javdb-extension-v*.zip`
+1. 打开 [GitHub Releases](https://github.com/Vintcet/my-javdb/releases)
+2. 下载最新的 `my-javdb-v*.zip`
 3. 解压到本地目录
 4. 打开扩展管理页：`chrome://extensions/` 或 `edge://extensions/`
 5. 开启开发者模式并加载解压后的目录

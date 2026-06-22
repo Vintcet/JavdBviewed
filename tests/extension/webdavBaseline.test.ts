@@ -187,7 +187,7 @@ describe('WebDAV backup and restore baseline', () => {
     } = await import('../../src/background/webdav');
 
     expect(normalizeWebDavBaseUrl(' https://alist.example.com/dav/backups ')).toBe('https://alist.example.com/dav/backups/');
-    expect(joinWebDavUrl('https://alist.example.com/dav/backups/', '/javdb-extension-backup.zip')).toBe('https://alist.example.com/dav/backups/javdb-extension-backup.zip');
+    expect(joinWebDavUrl('https://alist.example.com/dav/backups/', '/my-javdb-backup.zip')).toBe('https://alist.example.com/dav/backups/my-javdb-backup.zip');
     expect(joinWebDavUrl('https://alist.example.com/dav/backups', 'clients/device.json')).toBe('https://alist.example.com/dav/backups/clients/device.json');
     expect(buildUploadId('abcdef1234567890', '2026-05-27T07:22:55.524Z')).toBe('20260527_072255524Z_abcdef12');
     expect(sanitizeDeviceLabel('  Work Laptop  ')).toBe('Work Laptop');
@@ -198,7 +198,7 @@ describe('WebDAV backup and restore baseline', () => {
     const xml = `<?xml version="1.0"?>
       <d:multistatus xmlns:d="DAV:">
         <d:response>
-          <d:href>/dav/backups/javdb-extension-backup-2026-05-27-07-22-55.zip</d:href>
+          <d:href>/dav/backups/my-javdb-backup-2026-05-27-07-22-55.zip</d:href>
           <d:propstat><d:prop>
             <d:getlastmodified>Wed, 27 May 2026 07:22:55 GMT</d:getlastmodified>
             <d:getcontentlength>1234</d:getcontentlength>
@@ -218,8 +218,8 @@ describe('WebDAV backup and restore baseline', () => {
 
     expect(files).toEqual([
       {
-        name: 'javdb-extension-backup-2026-05-27-07-22-55.zip',
-        path: '/dav/backups/javdb-extension-backup-2026-05-27-07-22-55.zip',
+        name: 'my-javdb-backup-2026-05-27-07-22-55.zip',
+        path: '/dav/backups/my-javdb-backup-2026-05-27-07-22-55.zip',
         lastModified: '2026-05-27T07:22:55.000Z',
         isDirectory: false,
         size: 1234,
@@ -233,7 +233,7 @@ describe('WebDAV backup and restore baseline', () => {
       },
     ]);
     expect(files.filter(isUserBackupFile).map(file => file.name)).toEqual([
-      'javdb-extension-backup-2026-05-27-07-22-55.zip',
+      'my-javdb-backup-2026-05-27-07-22-55.zip',
     ]);
   });
 

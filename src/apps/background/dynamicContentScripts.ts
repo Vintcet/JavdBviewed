@@ -84,7 +84,7 @@ export async function registerDynamicContentScripts(showNotification: boolean = 
         await chrome.notifications.create({
           type: 'basic',
           iconUrl: 'assets/favicons/light/favicon-128x128.png',
-          title: 'Jav 助手 - 线路已更新',
+          title: 'My JavDB - 线路已更新',
           message: `已为 ${urlPrefixes.length} 个域名启用扩展功能，请刷新页面使用`,
           priority: 1,
         });

@@ -1,6 +1,6 @@
 # Contributing Guide
 
-Thanks for helping improve JavdBviewed. This project is a Chromium browser extension with a VitePress documentation site.
+Thanks for helping improve My JavDB. This project is a Chromium browser extension with a VitePress documentation site.
 
 ## Development Setup
 

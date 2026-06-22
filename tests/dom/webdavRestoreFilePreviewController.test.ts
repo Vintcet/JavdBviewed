@@ -51,13 +51,13 @@ function createController() {
         success: true,
         files: [
           {
-            name: 'javdb-extension-backup-2026-05-31-00-00-00.zip',
+            name: 'my-javdb-backup-2026-05-31-00-00-00.zip',
             path: '/old.zip',
             lastModified: '2026-05-31T00:00:00.000Z',
             size: 1024,
           },
           {
-            name: 'javdb-extension-backup-2026-06-01-00-00-00.zip',
+            name: 'my-javdb-backup-2026-06-01-00-00-00.zip',
             path: '/latest.zip',
             lastModified: '2026-06-01T00:00:00.000Z',
             size: 2048,
@@ -151,7 +151,7 @@ describe('WebDAV restore file preview controller', () => {
 
     const items = Array.from(document.querySelectorAll('.webdav-file-item'));
     expect(items).toHaveLength(2);
-    expect(items[0].textContent).toContain('javdb-extension-backup-2026-06-01-00-00-00.zip');
+    expect(items[0].textContent).toContain('my-javdb-backup-2026-06-01-00-00-00.zip');
     expect(items[0].classList.contains('selected')).toBe(true);
     expect(items[0].classList.contains('latest-file')).toBe(true);
     expect(getSelectedFile()?.path).toBe('/latest.zip');

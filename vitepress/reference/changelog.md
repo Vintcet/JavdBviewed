@@ -2,19 +2,19 @@
 
 本页将 GitHub Releases 的版本历史整理为站内可浏览文档，便于查看最近更新节奏、当前版本与下载入口。
 
-> 完整发布记录仍以 GitHub Releases 为准：<https://github.com/Adsryen/JavdBviewed/releases>
+> 完整发布记录仍以 GitHub Releases 为准：<https://github.com/Vintcet/my-javdb/releases>
 
 ## 当前版本
 
 - 文档整理时间：2026-05-05
 - 当前代码版本：`1.19.1` 
 - 最近标签版本：`v1.19.1.5`
-- 发布主页：<https://github.com/Adsryen/JavdBviewed/releases>
+- 发布主页：<https://github.com/Vintcet/my-javdb/releases>
 
 ## 如何更新
 
 1. 打开 GitHub Releases 页面
-2. 下载最新的 `javdb-extension-v*.zip`
+2. 下载最新的 `my-javdb-v*.zip`
 3. 解压到固定目录
 4. 进入 `chrome://extensions/` 或 `edge://extensions/`
 5. 重新加载已解压扩展

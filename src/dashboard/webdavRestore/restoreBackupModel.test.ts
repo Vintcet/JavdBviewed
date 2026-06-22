@@ -23,7 +23,7 @@ describe('WebDAV restore backup model', () => {
     const backup = buildRestoreBackupData({
       data,
       now: new Date('2026-06-01T00:01:02.345Z'),
-      originalFile: 'javdb-extension-backup-2026-06-01.zip',
+      originalFile: 'my-javdb-backup-2026-06-01.zip',
     });
 
     expect(backup).toEqual({
@@ -32,7 +32,7 @@ describe('WebDAV restore backup model', () => {
       data,
       metadata: {
         createdBy: 'smart-restore',
-        originalFile: 'javdb-extension-backup-2026-06-01.zip',
+        originalFile: 'my-javdb-backup-2026-06-01.zip',
       },
     });
   });

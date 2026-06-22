@@ -28,20 +28,20 @@ describe('WebDAV restore file list model', () => {
   });
 
   it('parses backup dates from json and zip filenames', () => {
-    expect(parseDateFromFilename('javdb-extension-backup-2026-05-30.json')?.toISOString()).toBe('2026-05-30T00:00:00.000Z');
-    expect(parseDateFromFilename('javdb-extension-backup-2026-05-30-13-14-15.zip')?.toISOString()).toBe('2026-05-30T13:14:15.000Z');
+    expect(parseDateFromFilename('my-javdb-backup-2026-05-30.json')?.toISOString()).toBe('2026-05-30T00:00:00.000Z');
+    expect(parseDateFromFilename('my-javdb-backup-2026-05-30-13-14-15.zip')?.toISOString()).toBe('2026-05-30T13:14:15.000Z');
     expect(parseDateFromFilename('notes.zip')).toBeNull();
   });
 
   it('builds backup range label from filenames before lastModified fallback', () => {
     const label = buildBackupDateRangeLabel([
       {
-        name: 'javdb-extension-backup-2026-05-31.zip',
+        name: 'my-javdb-backup-2026-05-31.zip',
         path: '/a',
         lastModified: '2026-01-01T00:00:00.000Z',
       },
       {
-        name: 'javdb-extension-backup-2026-05-29.zip',
+        name: 'my-javdb-backup-2026-05-29.zip',
         path: '/b',
         lastModified: '2026-01-02T00:00:00.000Z',
       },

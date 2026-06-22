@@ -7,7 +7,7 @@ import archiver from 'archiver';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 const distDir = resolve(root, 'dist');
-const zipPath = resolve(distDir, 'javdb-extension.zip');
+const zipPath = resolve(distDir, 'my-javdb.zip');
 
 async function main() {
     try {

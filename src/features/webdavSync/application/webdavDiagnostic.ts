@@ -159,7 +159,7 @@ export class WebDAVDiagnostic {
             try {
                 const headers: Record<string, string> = {
                     'Authorization': 'Basic ' + btoa(`${this.config.username}:${this.config.password}`),
-                    'User-Agent': 'JavDB-Extension-Diagnostic/1.0',
+                    'User-Agent': 'My-JavDB-Diagnostic/1.0',
                     ...testCase.headers
                 };
 

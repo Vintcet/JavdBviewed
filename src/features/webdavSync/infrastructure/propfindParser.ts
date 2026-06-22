@@ -7,7 +7,7 @@ export function isUserBackupFile(file: WebDAVFile): boolean {
   if (!name) return false;
   if (name === WEBDAV_UPLOAD_INDEX_FILE) return false;
   if (/^clients$/i.test(name)) return false;
-  if (/^javdb-extension-backup-.*\.(zip|json)$/i.test(name)) return true;
+  if (/^(my-javdb|javdb-extension)-backup-.*\.(zip|json)$/i.test(name)) return true;
   return false;
 }
 

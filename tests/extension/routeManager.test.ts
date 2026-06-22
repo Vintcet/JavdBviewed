@@ -30,7 +30,7 @@ describe('RouteManager remote config', () => {
         updatePolicy: {
           latestVersion: '1.20.2',
           minimumVersion: '1.18.0',
-          releaseUrl: 'https://github.com/Adsryen/JavdBviewed/releases/latest',
+          releaseUrl: 'https://github.com/Vintcet/my-javdb/releases/latest',
         },
         featureFlags: {
           telemetryRequired: true,

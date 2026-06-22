@@ -159,6 +159,6 @@ export function generateHeaders(apiKey: string): Record<string, string> {
   return {
     'Authorization': `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
-    'User-Agent': 'JavDB-Extension/1.0'
+    'User-Agent': 'My-JavDB/1.0'
   };
 }

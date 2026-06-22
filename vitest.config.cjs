@@ -1,7 +1,7 @@
 const { defineConfig } = require('vitest/config');
 
 module.exports = defineConfig({
-  cacheDir: '/tmp/javdbviewed-vitest-node-cache',
+  cacheDir: '.vitest-cache/node',
   test: {
     globals: true,
     restoreMocks: true,

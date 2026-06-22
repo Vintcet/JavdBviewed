@@ -413,7 +413,7 @@ $assetVersionStr = if ($buildNum) { "$versionStr-build-$buildNum" } else { $vers
 $legacyFullVersionStr = if ($buildNum) { "$versionStr.$buildNum" } else { $versionStr }
 $tagName = "v$releaseVersionStr"
 $releaseTitle = "Release $releaseVersionStr"
-$zipName = "javdb-extension-v$assetVersionStr.zip"
+$zipName = "my-javdb-v$assetVersionStr.zip"
 $zipPath = "dist-zip\$zipName"
 
 Write-Host "Looking for artifact: $zipName" -ForegroundColor Gray
@@ -422,10 +422,10 @@ Write-Host "Looking for artifact: $zipName" -ForegroundColor Gray
 if (Test-Path $zipPath) {
     Write-Host "Found artifact with build number: $zipName" -ForegroundColor Green
 } else {
-    $legacyZipName = "javdb-extension-v$legacyFullVersionStr.zip"
+    $legacyZipName = "my-javdb-v$legacyFullVersionStr.zip"
     $legacyZipPath = "dist-zip\$legacyZipName"
     # 如果找不到带 build 号的文件，尝试查找不带 build 号的文件
-    $altZipName = "javdb-extension-v$versionStr.zip"
+    $altZipName = "my-javdb-v$versionStr.zip"
     $altZipPath = "dist-zip\$altZipName"
     if (Test-Path $legacyZipPath) {
         Write-Host "Found legacy artifact with dotted build number: $legacyZipName" -ForegroundColor Yellow

@@ -172,7 +172,7 @@ export async function initVersionBadge(): Promise<void> {
     if (versionInfo.status === 'outdated') {
       badge.style.cursor = 'pointer';
       badge.addEventListener('click', () => {
-        window.open('https://github.com/Adsryen/JavdBviewed/releases/latest', '_blank');
+        window.open('https://github.com/Vintcet/my-javdb/releases/latest', '_blank');
       });
     }
   }).catch(error => {

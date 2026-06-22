@@ -77,7 +77,7 @@ function createController(overrides: Partial<ConstructorParameters<typeof WebDAV
 
   const options = {
     storageKeys,
-    getSelectedFile: () => ({ name: 'javdb-extension-backup-2026-06-01.zip', path: '/backup.zip' }),
+    getSelectedFile: () => ({ name: 'my-javdb-backup-2026-06-01.zip', path: '/backup.zip' }),
     getRestoreContext: () => ({
       diffResult: {
         videoRecords: { summary: {} },
@@ -160,7 +160,7 @@ describe('WebDAV restore apply controller', () => {
       version: '2.0',
       metadata: {
         createdBy: 'smart-restore',
-        originalFile: 'javdb-extension-backup-2026-06-01.zip',
+        originalFile: 'my-javdb-backup-2026-06-01.zip',
       },
     });
     expect(storage.get('viewed')).toEqual({ 'AAA-001': validVideoRecord('AAA-001') });

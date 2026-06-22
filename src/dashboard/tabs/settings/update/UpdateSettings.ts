@@ -18,7 +18,7 @@ import type { ExtensionSettings } from '../../../../types';
 export class UpdateSettings extends BaseSettingsPanel {
     private settings: any = {};
     private isCheckingUpdate = false;
-    private downloadUpdateUrl = 'https://github.com/Adsryen/JavdBviewed/releases/latest';
+    private downloadUpdateUrl = 'https://github.com/Vintcet/my-javdb/releases/latest';
     private readonly onAutoUpdateCheckChange = this.handleAutoUpdateCheckToggle.bind(this);
     private readonly onUpdateCheckIntervalChange = this.handleUpdateCheckIntervalChange.bind(this);
     private readonly onIncludePrereleaseChange = this.handleIncludePrereleaseToggle.bind(this);
@@ -515,7 +515,7 @@ export class UpdateSettings extends BaseSettingsPanel {
         log.verbose('[UpdateSettings] 打开更新日志...');
         
         // 打开GitHub Releases页面
-        const changelogUrl = 'https://github.com/Adsryen/JavdBviewed/releases';
+        const changelogUrl = 'https://github.com/Vintcet/my-javdb/releases';
         window.open(changelogUrl, '_blank');
     }
 

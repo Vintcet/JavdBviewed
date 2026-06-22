@@ -1,8 +1,8 @@
 {
-  "name": "javdb-extension",
+  "name": "my-javdb",
   "type": "module",
-  "version": "1.20.3",
-  "description": "Jav 助手",
+  "version": "0.1.0",
+  "description": "My JavDB browser extension",
   "scripts": {
     "vitepress:dev": "vitepress dev vitepress --host 127.0.0.1 --port 5174",
     "vitepress:build": "vitepress build vitepress",

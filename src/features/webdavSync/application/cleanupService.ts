@@ -10,6 +10,7 @@ export interface WebDAVSettingsProvider {
 
 export interface WebDAVCleanupOptions extends WebDAVClientOptions, WebDAVSettingsProvider {
   logger?: WebDAVClientLog;
+  listFiles?: (options: WebDAVCleanupOptions) => Promise<{ success: boolean; error?: string; files?: WebDAVFile[] }>;
 }
 
 export async function listWebDAVFiles(options: WebDAVCleanupOptions): Promise<{ success: boolean; error?: string; files?: WebDAVFile[] }> {
@@ -29,7 +30,7 @@ export async function listWebDAVFiles(options: WebDAVCleanupOptions): Promise<{ 
       Authorization: 'Basic ' + btoa(`${settings.webdav.username}:${settings.webdav.password}`),
       Depth: '1',
       'Content-Type': 'application/xml; charset=utf-8',
-      'User-Agent': 'JavDB-Extension/1.0',
+      'User-Agent': 'My-JavDB/1.0',
     };
     const xmlBody = `<?xml version="1.0" encoding="utf-8"?>\n<D:propfind xmlns:D="DAV:">\n    <D:allprop/>\n</D:propfind>`;
     const response = await fetch(url, { method: 'PROPFIND', headers, body: xmlBody });
@@ -76,13 +77,13 @@ export async function cleanupOldBackups(retentionCount: number, options: WebDAVC
   if (!settings.webdav.enabled || !settings.webdav.url) return;
   try {
     logger?.('INFO', 'cleanupOldBackups started (per-device)', { retentionCount });
-    const result = await listWebDAVFiles(options);
+    const result = await (options.listFiles || listWebDAVFiles)(options);
     if (!result.success || !result.files || result.files.length === 0) {
       logger?.('WARN', 'cleanupOldBackups: listFiles returned no files', { success: result.success, fileCount: result.files?.length });
       return;
     }
     const allBackupFiles = result.files
-      .filter((f) => f.name.includes('javdb-extension-backup-') && (f.name.endsWith('.json') || f.name.endsWith('.zip')));
+      .filter((f) => /^(my-javdb|javdb-extension)-backup-.*\.(json|zip)$/i.test(f.name));
 
     logger?.('INFO', 'cleanupOldBackups: total backup files found', { total: allBackupFiles.length });
 
@@ -166,7 +167,7 @@ export async function cleanupOldBackups(retentionCount: number, options: WebDAVC
         });
         const deleteResp = await fetch(fileUrl, {
           method: 'DELETE',
-          headers: { Authorization: 'Basic ' + btoa(`${settings.webdav.username}:${settings.webdav.password}`), 'User-Agent': 'JavDB-Extension/1.0' },
+          headers: { Authorization: 'Basic ' + btoa(`${settings.webdav.username}:${settings.webdav.password}`), 'User-Agent': 'My-JavDB/1.0' },
         });
         if (deleteResp.ok || deleteResp.status === 204 || deleteResp.status === 404) {
           logger?.('INFO', 'Deleted old WebDAV backup', { name: file.name, url: fileUrl, status: deleteResp.status });

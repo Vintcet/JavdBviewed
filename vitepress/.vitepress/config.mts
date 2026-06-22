@@ -3,8 +3,8 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default withMermaid(defineConfig({
   lang: 'zh-CN',
-  title: 'JavdBviewed 文档中心',
-  description: 'JavdBviewed 的使用文档、功能说明、隐私政策与开发参考',
+  title: 'My JavDB 文档中心',
+  description: 'My JavDB 的使用文档、功能说明、隐私政策与开发参考',
   cleanUrls: true,
   lastUpdated: true,
   head: [
@@ -23,7 +23,7 @@ export default withMermaid(defineConfig({
       { text: '使用教程', link: '/guide/' },
       { text: '版本发布', link: '/reference/changelog' },
       { text: '开发文档', link: '/developer/' },
-      { text: 'GitHub', link: 'https://github.com/Adsryen/JavdBviewed' }
+      { text: 'GitHub', link: 'https://github.com/Vintcet/my-javdb' }
     ],
     sidebar: {
       '/guide/': [
@@ -165,7 +165,7 @@ export default withMermaid(defineConfig({
       next: '下一篇'
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Adsryen/JavdBviewed' }
+      { icon: 'github', link: 'https://github.com/Vintcet/my-javdb' }
     ],
     lastUpdated: {
       text: '最后更新'

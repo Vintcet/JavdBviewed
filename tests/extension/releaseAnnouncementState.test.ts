@@ -26,7 +26,7 @@ describe('release announcement state', () => {
       type: 'install',
       announcementKey: '1.20.2',
       version: '1.20.2',
-      title: '欢迎使用 Jav 助手',
+      title: '欢迎使用 My JavDB',
       primaryActionLabel: '开始使用',
     }));
     expect(announcement?.subtitle).toContain('个人浏览助手');
@@ -88,7 +88,7 @@ describe('release announcement state', () => {
     expect(announcement).toEqual(expect.objectContaining({
       type: 'update',
       announcementKey: RELEASE_ANNOUNCEMENT_FALLBACK_KEY,
-      title: 'Jav 助手已更新',
+      title: 'My JavDB已更新',
     }));
     expect(announcement?.subtitle).not.toContain('v');
   });

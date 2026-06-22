@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: JavdBviewed
+  name: My JavDB
   text: 一个更完整的 JavDB 浏览增强扩展
   tagline: 集中提供安装说明、使用教程、版本发布、隐私政策与开发文档
   image:
     src: /home-hero.png
-    alt: JavdBviewed 夜晚图标
+    alt: My JavDB 夜晚图标
   actions:
     - theme: brand
       text: 立即开始
@@ -93,6 +93,6 @@ features:
 
 ## 项目链接
 
-- [GitHub 仓库](https://github.com/Adsryen/JavdBviewed)
-- [GitHub Releases](https://github.com/Adsryen/JavdBviewed/releases)
-- [GitHub Issues](https://github.com/Adsryen/JavdBviewed/issues)
+- [GitHub 仓库](https://github.com/Vintcet/my-javdb)
+- [GitHub Releases](https://github.com/Vintcet/my-javdb/releases)
+- [GitHub Issues](https://github.com/Vintcet/my-javdb/issues)

@@ -24,7 +24,7 @@ function createController(overrides: Partial<ConstructorParameters<typeof WebDAV
   });
   const options = {
     queryInModal: (selector: string) => document.querySelector(selector),
-    getSelectedFile: () => ({ name: 'javdb-extension-backup-2026-06-01.zip', path: '/backup.zip' }),
+    getSelectedFile: () => ({ name: 'my-javdb-backup-2026-06-01.zip', path: '/backup.zip' }),
     getCloudData: () => ({ data: { 'AAA-001': {} } }),
     requireAuthIfRestricted: vi.fn(async () => true),
     showConfirm: vi.fn(async () => true),

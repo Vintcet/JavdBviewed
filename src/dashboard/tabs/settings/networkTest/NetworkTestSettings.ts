@@ -426,7 +426,7 @@ export class NetworkTestSettings extends BaseSettingsPanel {
             const customUrl = this.customProxyUrlInput.value;
 
             // 测试文件 URL（使用本仓库的 routes.json）
-            const testFileUrl = 'https://raw.githubusercontent.com/Adsryen/JavdBviewed/main/public/routes.json';
+            const testFileUrl = 'https://raw.githubusercontent.com/Vintcet/my-javdb/main/public/routes.json';
 
             // 获取代理 URL
             const proxyUrl = this.getProxyUrl(proxyService, customUrl);

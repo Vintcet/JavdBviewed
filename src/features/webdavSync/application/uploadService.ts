@@ -35,7 +35,7 @@ export async function performWebDAVUpload(options: WebDAVUploadServiceOptions): 
     const minute = String(now.getMinutes()).padStart(2, '0');
     const second = String(now.getSeconds()).padStart(2, '0');
     const date = `${year}-${month}-${day}`;
-    const filename = `javdb-extension-backup-${date}-${hour}-${minute}-${second}.zip`;
+    const filename = `my-javdb-backup-${date}-${hour}-${minute}-${second}.zip`;
 
     let fileUrl = normalizeWebDavBaseUrl(settings.webdav.url);
     const baseUrl = fileUrl;

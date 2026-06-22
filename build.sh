@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Simple builder for javdb-extension
+# Simple builder for my-javdb
 # - Installs deps
 # - Builds via Vite
-# - Zips dist to dist-zip/javdb-extension-<version>.zip
+# - Zips dist to dist-zip/my-javdb-<version>.zip
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -41,7 +41,7 @@ configure_pnpm_virtual_store() {
   if is_wsl_on_onedrive; then
     local key
     key=$(printf '%s' "$root_dir" | sha256sum | cut -d' ' -f1)
-    pnpm_virtual_store_dir="/tmp/javdb-extension-pnpm/${key}/.pnpm"
+    pnpm_virtual_store_dir="/tmp/my-javdb-pnpm/${key}/.pnpm"
     mkdir -p "$pnpm_virtual_store_dir"
     warn "Detected WSL + OneDrive workspace. Using Linux virtual store: $pnpm_virtual_store_dir"
   fi
@@ -132,14 +132,14 @@ zip_dist() {
   mkdir -p "$zip_dir"
   local out
   if have zip; then
-    zip_name="javdb-extension-v${artifact}.zip"
+    zip_name="my-javdb-v${artifact}.zip"
     out="$zip_dir/$zip_name"
     [[ -f "$out" ]] && rm -f "$out"
     info "Zipping dist -> $out"
     (cd "$dist_dir" && zip -qr "$out" .)
     ok "ZIP created: $out"
   else
-    zip_name="javdb-extension-v${artifact}.tar.gz"
+    zip_name="my-javdb-v${artifact}.tar.gz"
     out="$zip_dir/$zip_name"
     [[ -f "$out" ]] && rm -f "$out"
     info "Archiving dist (tar.gz) -> $out"
@@ -402,9 +402,9 @@ preview_release_notes() {
     # 输出制品信息（兼容带 v 与不带 v 的命名）
     local current_artifact
     current_artifact=$(artifact_version "$current_version" "$current_build")
-    local zip_file_v="javdb-extension-v$current_artifact.zip"
-    local zip_file_legacy="javdb-extension-v$current_version.$current_build.zip"
-    local zip_file_nv="javdb-extension-${current_version}.zip"
+    local zip_file_v="my-javdb-v$current_artifact.zip"
+    local zip_file_legacy="my-javdb-v$current_version.$current_build.zip"
+    local zip_file_nv="my-javdb-${current_version}.zip"
     local display_file=""
     if [[ -f "$zip_dir/$zip_file_v" ]]; then
       display_file="$zip_file_v"
@@ -604,12 +604,12 @@ menu_main() {
       local b; b=$(read_build)
       local av; av=$(artifact_version "$v" "$b")
       local tag="v${v}"
-      local asset_zip_v="$zip_dir/javdb-extension-v${av}.zip"
-      local asset_tgz_v="$zip_dir/javdb-extension-v${av}.tar.gz"
-      local asset_zip_legacy="$zip_dir/javdb-extension-v${v}.${b}.zip"
-      local asset_tgz_legacy="$zip_dir/javdb-extension-v${v}.${b}.tar.gz"
-      local asset_zip_nv="$zip_dir/javdb-extension-${v}.zip"
-      local asset_tgz_nv="$zip_dir/javdb-extension-${v}.tar.gz"
+      local asset_zip_v="$zip_dir/my-javdb-v${av}.zip"
+      local asset_tgz_v="$zip_dir/my-javdb-v${av}.tar.gz"
+      local asset_zip_legacy="$zip_dir/my-javdb-v${v}.${b}.zip"
+      local asset_tgz_legacy="$zip_dir/my-javdb-v${v}.${b}.tar.gz"
+      local asset_zip_nv="$zip_dir/my-javdb-${v}.zip"
+      local asset_tgz_nv="$zip_dir/my-javdb-${v}.tar.gz"
       local asset=""
       if [[ -f "$asset_zip_v" ]]; then asset="$asset_zip_v"; elif [[ -f "$asset_tgz_v" ]]; then asset="$asset_tgz_v"; elif [[ -n "$b" && -f "$asset_zip_legacy" ]]; then asset="$asset_zip_legacy"; elif [[ -n "$b" && -f "$asset_tgz_legacy" ]]; then asset="$asset_tgz_legacy"; elif [[ -f "$asset_zip_nv" ]]; then asset="$asset_zip_nv"; elif [[ -f "$asset_tgz_nv" ]]; then asset="$asset_tgz_nv"; fi
       if [[ -z "$asset" ]]; then

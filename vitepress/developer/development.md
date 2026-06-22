@@ -1,6 +1,6 @@
 ﻿# 二次开发指南
 
-本页面向希望从源码构建、调试、理解或扩展 `JavdBviewed` 的开发者。相比用户文档，这里更关注代码结构、模块职责、开发流程与排查思路。
+本页面向希望从源码构建、调试、理解或扩展 `My JavDB` 的开发者。相比用户文档，这里更关注代码结构、模块职责、开发流程与排查思路。
 
 ## 建议阅读顺序
 
@@ -29,8 +29,8 @@
 ### 克隆项目
 
 ```bash
-git clone https://github.com/Adsryen/JavdBviewed.git
-cd JavdBviewed
+git clone https://github.com/Vintcet/my-javdb.git
+cd My JavDB
 ```
 
 ### 安装依赖
@@ -66,7 +66,7 @@ npm run build
 下面是理解项目时最值得先掌握的一层结构，而不是完整文件清单。
 
 ```text
-JavdBviewed/
+My JavDB/
 ├── src/
 │   ├── background/     # 后台脚本与消息分发
 │   ├── content/        # 页面注入脚本与页面增强
