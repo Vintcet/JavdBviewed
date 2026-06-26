@@ -36,7 +36,7 @@ let RECORDS_TAB_INITIALIZED = false;
 
 export function initRecordsTab(): void {
     if (RECORDS_TAB_INITIALIZED) {
-        console.warn('[RecordsTab] initRecordsTab() called more than once, skipping re-init');
+        console.debug('[RecordsTab] initRecordsTab() called more than once, skipping re-init');
         return;
     }
     RECORDS_TAB_INITIALIZED = true;

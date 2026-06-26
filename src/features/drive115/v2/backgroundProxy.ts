@@ -205,6 +205,100 @@ export function installDrive115V2Proxy(): void {
             sendResponse({ success: false, message: e?.message || '后台换取 token 异常' });
             return false;
           }
+        } else if (message.type === 'drive115.search_files_v2') {
+          try {
+            const accessToken = String(message?.payload?.accessToken || '').trim();
+            const base = String(message?.payload?.baseUrl || 'https://proapi.115.com').replace(/\/$/, '');
+            const query = message?.payload?.query || {};
+            if (!accessToken) {
+              sendResponse({ success: false, message: '缺少 access_token' });
+              return false;
+            }
+
+            const url = new URL(`${base}/open/ufile/search`);
+            Object.entries(query).forEach(([key, value]) => {
+              if (value !== undefined && value !== null && String(value).trim() !== '') {
+                url.searchParams.set(key, String(value));
+              }
+            });
+
+            fetch(url.toString(), {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/json'
+              },
+            }).then(async (res) => {
+              const raw = await res.json().catch(() => ({} as any));
+              const ok = typeof raw.state === 'boolean' ? raw.state : res.ok;
+              sendResponse({
+                success: ok,
+                message: raw?.message || raw?.error,
+                raw,
+                data: raw?.data,
+                count: raw?.count,
+                limit: raw?.limit,
+                offset: raw?.offset,
+              });
+            }).catch((err) => {
+              sendResponse({ success: false, message: err?.message || '后台搜索请求失败' });
+            });
+            return true;
+          } catch (e: any) {
+            sendResponse({ success: false, message: e?.message || '后台搜索异常' });
+            return false;
+          }
+        } else if (message.type === 'drive115.search_files_legacy') {
+          try {
+            const searchValue = String(message?.payload?.searchValue || '').trim();
+            const offset = Math.max(0, Number(message?.payload?.offset ?? 0) || 0);
+            const limit = Math.min(100, Math.max(1, Number(message?.payload?.limit ?? 30) || 30));
+            if (!searchValue) {
+              sendResponse({ success: false, message: 'search_value 不能为空' });
+              return false;
+            }
+
+            const url = new URL('https://webapi.115.com/files/search');
+            url.searchParams.set('search_value', searchValue);
+            url.searchParams.set('offset', String(offset));
+            url.searchParams.set('limit', String(limit));
+
+            fetch(url.toString(), {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            }).then(async (res) => {
+              const text = await res.text().catch(() => '');
+              let raw: any = {};
+              try {
+                raw = text ? JSON.parse(text) : {};
+              } catch {
+                raw = { rawText: text };
+              }
+
+              const data = Array.isArray(raw?.data) ? raw.data : [];
+              const message = raw?.error || raw?.message || (res.ok ? '' : `旧接口搜索网络错误: ${res.status}`);
+              const loginRequired = /登录|login|signin/i.test(String(message || text || ''));
+              const ok = res.ok && Array.isArray(raw?.data) && raw?.state !== false;
+              sendResponse({
+                success: ok,
+                message: ok ? undefined : (loginRequired ? '未登录115网盘' : (message || '旧接口搜索失败')),
+                raw,
+                data,
+                count: typeof raw?.count === 'number' ? raw.count : data.length,
+                loginRequired,
+              });
+            }).catch((err) => {
+              sendResponse({ success: false, message: err?.message || '后台旧接口搜索请求失败' });
+            });
+            return true;
+          } catch (e: any) {
+            sendResponse({ success: false, message: e?.message || '后台旧接口搜索异常' });
+            return false;
+          }
         } else if (message.type === 'drive115.list_files_v2') {
           try {
             const accessToken = String(message?.payload?.accessToken || '').trim();

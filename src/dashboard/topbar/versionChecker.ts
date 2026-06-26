@@ -153,9 +153,9 @@ export async function initVersionBadge(): Promise<void> {
         break;
       case 'latest':
         badge.classList.add('version-latest');
-        displayText = 'Latest';
+        displayText = 'Local';
         if (versionInfo.latest) {
-          title += ` | GitHub: ${versionInfo.latest}`;
+          title += ` | Remote update check disabled`;
         }
         break;
       default:

@@ -166,6 +166,60 @@ describe('detail area visual polish', () => {
     expect(rows[10].classList.contains('jdb-magnet-page-hidden')).toBe(false);
   });
 
+  it('hides native detail tabs and expands the magnet content frame', () => {
+    const manager = new MagnetSearchManager() as any;
+    document.body.innerHTML = `
+      <article class="message video-panel">
+        <div class="message-body">
+          <div class="tabs no-bottom">
+            <ul>
+              <li class="is-active"><a href="#magnets">磁链</a></li>
+              <li><a href="#reviews">短评(13)</a></li>
+              <li><a href="#lists">相关清单</a></li>
+            </ul>
+          </div>
+          <div id="tabs-container">
+            <div id="magnets-content"></div>
+          </div>
+        </div>
+      </article>
+    `;
+
+    manager.addUnifiedMagnetStyles();
+    manager.hideNativeDetailTabs();
+    const tabs = document.querySelector<HTMLElement>('.tabs.no-bottom');
+    const styleText = document.getElementById('unified-magnet-list-styles')?.textContent || '';
+
+    expect(tabs?.classList.contains('jdb-hide-native-detail-tabs')).toBe(true);
+    expect(tabs?.style.display).toBe('none');
+    expect(document.querySelector('#tabs-container')?.classList.contains('jdb-magnet-tabs-container')).toBe(true);
+    expect(styleText).toContain('.tabs.jdb-hide-native-detail-tabs');
+    expect(styleText).toContain('max-width: none !important');
+  });
+
+  it('places the 115 match panel outside the cover column', async () => {
+    const enhancer = new VideoDetailEnhancer() as any;
+    document.body.innerHTML = `
+      <div class="columns">
+        <div class="column-video-cover"><img class="video-cover" src="cover.jpg"></div>
+        <div class="column">metadata</div>
+      </div>
+      <article class="message video-panel">
+        <div class="message-body">
+          <div id="magnets-content"></div>
+        </div>
+      </article>
+    `;
+
+    const panel = await enhancer.ensureDrive115MatchPanel();
+    const coverColumn = document.querySelector<HTMLElement>('.column-video-cover')!;
+    const detailHeader = document.querySelector<HTMLElement>('.columns')!;
+
+    expect(panel).toBeTruthy();
+    expect(coverColumn.contains(panel)).toBe(false);
+    expect(panel?.previousElementSibling).toBe(detailHeader);
+  });
+
   it('adds compact card styling classes to injected review rows', () => {
     const enhancer = new VideoDetailEnhancer() as any;
 
@@ -192,6 +246,6 @@ describe('detail area visual polish', () => {
     expect(item.querySelector('.jdb-review-content')).toBeTruthy();
     expect(item.querySelector<HTMLButtonElement>('.jdb-review-like-button')).toBeNull();
     expect(item.querySelector('.jdb-review-like-count')?.textContent).toContain('12');
-    expect(document.getElementById('jhs-review-banner')?.textContent).toContain('JavDB 助手');
+    expect(document.getElementById('jhs-review-banner')).toBeNull();
   });
 });

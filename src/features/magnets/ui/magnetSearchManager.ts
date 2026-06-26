@@ -189,6 +189,7 @@ export class MagnetSearchManager {
 
       // 注入统一样式，确保磁力列表布局不会溢出
       this.addUnifiedMagnetStyles();
+      this.hideNativeDetailTabs();
 
       // 添加搜索源标签
       if (searchEnabled) {
@@ -1197,6 +1198,40 @@ export class MagnetSearchManager {
     container.prepend(bar);
   }
 
+  private hideNativeDetailTabs(): void {
+    const tabBars = Array.from(document.querySelectorAll<HTMLElement>([
+      'article.message.video-panel .tabs',
+      '.video-panel .tabs',
+      '#tabs-container > .tabs',
+    ].join(', ')));
+
+    tabBars.forEach((tabBar) => {
+      const text = (tabBar.textContent || '').replace(/\s+/g, '');
+      const hasMagnetTab = /磁链|磁鏈|magnet/i.test(text)
+        || !!tabBar.querySelector('a[href="#magnets"], a[href*="#magnets"], [data-movie-tab-target="magnets"]');
+      const hasReviewTab = /短评|短評|评论|評論|review/i.test(text)
+        || !!tabBar.querySelector('a[href="#reviews"], a[href*="#reviews"], [data-movie-tab-target="reviews"]');
+      const hasListTab = /相关清单|相關清單|清单|清單|list/i.test(text)
+        || !!tabBar.querySelector('a[href="#lists"], a[href*="#lists"], [data-movie-tab-target="lists"]');
+
+      if (!hasMagnetTab || (!hasReviewTab && !hasListTab)) return;
+
+      tabBar.classList.add('jdb-hide-native-detail-tabs');
+      tabBar.setAttribute('aria-hidden', 'true');
+      tabBar.style.display = 'none';
+    });
+
+    const magnetsContent = document.querySelector<HTMLElement>('#magnets-content');
+    if (magnetsContent) {
+      magnetsContent.hidden = false;
+      magnetsContent.removeAttribute('hidden');
+      magnetsContent.setAttribute('aria-hidden', 'false');
+      magnetsContent.classList.add('is-active');
+    }
+
+    magnetsContent?.closest<HTMLElement>('#tabs-container')?.classList.add('jdb-magnet-tabs-container');
+  }
+
   private decorateNativeMagnetRow(row: HTMLElement): void {
     row.classList.add('jdb-magnet-row', 'jdb-native-magnet-row', 'privacy-protected');
     row.setAttribute('data-privacy-protected', 'true');
@@ -1790,7 +1825,7 @@ export class MagnetSearchManager {
       /* 容器级别约束，避免出现横向滚动和超宽 */
       #magnets-content {
         max-width: 100% !important;
-        max-height: 720px !important;
+        max-height: min(82vh, 960px) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         box-sizing: border-box !important;
@@ -2443,6 +2478,33 @@ export class MagnetSearchManager {
       /* Bulma columns 在详情区的列允许收缩 */
       article.message.video-panel .columns > .column {
         min-width: 0 !important;
+      }
+
+      article.message.video-panel .tabs.jdb-hide-native-detail-tabs,
+      article.message.video-panel .tabs:has(a[href="#magnets"]):has(a[href="#reviews"]),
+      article.message.video-panel .tabs:has(a[href="#magnets"]):has(a[href="#lists"]),
+      article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="reviews"]),
+      article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="lists"]) {
+        display: none !important;
+      }
+
+      article.message.video-panel .message-body:has(#magnets-content),
+      article.message.video-panel #tabs-container,
+      article.message.video-panel .jdb-magnet-tabs-container {
+        width: 100% !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
+      }
+
+      article.message.video-panel .message-body:has(#magnets-content) {
+        padding-top: 12px !important;
+      }
+
+      article.message.video-panel #magnets-content {
+        width: 100% !important;
+        max-width: none !important;
+        min-height: 260px;
+        margin: 0 !important;
       }
     `;
     document.head.appendChild(style);

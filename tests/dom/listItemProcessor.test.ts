@@ -4,6 +4,12 @@ import { VIDEO_STATUS } from '../../src/utils/config';
 import type { VideoRecord } from '../../src/types';
 import { processVisibleItems } from '../../src/features/listEnhancement/content/itemProcessor';
 
+const drive115RouterMock = vi.hoisted(() => ({
+  isDrive115Enabled: vi.fn(),
+  searchFiles: vi.fn(),
+  searchFilesLegacyWeb: vi.fn(),
+}));
+
 vi.mock('../../src/features/videoDetail', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/features/videoDetail')>();
   return {
@@ -11,6 +17,8 @@ vi.mock('../../src/features/videoDetail', async (importOriginal) => {
     isPageProperlyLoaded: vi.fn(() => true),
   };
 });
+
+vi.mock('../../src/features/drive115/router', () => drive115RouterMock);
 
 function createRecord(id: string, status: VideoRecord['status']): VideoRecord {
   return {
@@ -36,9 +44,28 @@ function renderListItem(videoId: string, extraTitle = ''): HTMLElement {
   return item;
 }
 
+async function flushPromises(times = 6): Promise<void> {
+  for (let i = 0; i < times; i += 1) {
+    await Promise.resolve();
+  }
+}
+
+async function waitForDrive115Badge(item: HTMLElement): Promise<HTMLElement | null> {
+  for (let i = 0; i < 12; i += 1) {
+    await flushPromises();
+    const badge = item.querySelector<HTMLElement>('.jdb-drive115-list-match');
+    if (badge && badge.textContent !== '匹配中') return badge;
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  return item.querySelector<HTMLElement>('.jdb-drive115-list-match');
+}
+
 describe('list item processor', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div class="movie-list"></div>';
+    drive115RouterMock.isDrive115Enabled.mockResolvedValue(true);
+    drive115RouterMock.searchFiles.mockResolvedValue([]);
+    drive115RouterMock.searchFilesLegacyWeb.mockResolvedValue([]);
     STATE.settings = {
       display: {
         hideViewed: false,
@@ -48,6 +75,9 @@ describe('list item processor', () => {
       },
       listEnhancement: {
         showStatusBadge: true,
+      },
+      videoEnhancement: {
+        enableDrive115Match: false,
       },
     } as any;
     STATE.records = {};
@@ -79,6 +109,47 @@ describe('list item processor', () => {
     const tag = document.querySelector('.custom-status-tag');
     expect(tag?.textContent).toBe('已观看');
     expect(tag?.className).toContain('is-success');
+  });
+
+  it('renders a 115 match count badge in the list tag row with exact video-code filtering', async () => {
+    const list = document.querySelector('.movie-list')!;
+    const item = renderListItem('ABC-009');
+    list.appendChild(item);
+    (STATE.settings as any).videoEnhancement.enableDrive115Match = true;
+    drive115RouterMock.searchFilesLegacyWeb.mockResolvedValue([
+      { name: 'ABC-009.mp4', pickCode: 'pc-1', fileId: 'fid-1', parentId: 'root', size: 1024, updatedAt: 100, raw: {} },
+      { name: 'ABC_009-CD2.mkv', pickCode: 'pc-2', fileId: 'fid-2', parentId: 'root', size: 2048, updatedAt: 200, raw: {} },
+      { name: 'ABC-0090.mp4', pickCode: 'bad-1', fileId: 'fid-bad-1', parentId: 'root', size: 4096, updatedAt: 300, raw: {} },
+      { name: 'XABC-009.mp4', pickCode: 'bad-2', fileId: 'fid-bad-2', parentId: 'root', size: 4096, updatedAt: 300, raw: {} },
+      { name: 'ABC-009.srt', pickCode: 'bad-3', fileId: 'fid-bad-3', parentId: 'root', size: 128, updatedAt: 300, raw: {} },
+    ]);
+
+    processVisibleItems();
+    const badge = await waitForDrive115Badge(item);
+
+    expect(badge?.parentElement).toBe(item.querySelector('.tags.has-addons'));
+    expect(badge?.textContent).toBe('匹配2个');
+    expect(badge?.classList.contains('is-success')).toBe(true);
+    const styleText = document.getElementById('jdb-drive115-list-match-style')?.textContent || '';
+    expect(styleText).toContain('font-weight: 800');
+    expect(styleText).toContain('border: 1px solid');
+    expect(drive115RouterMock.searchFiles).not.toHaveBeenCalled();
+  });
+
+  it('renders an unmatched 115 badge when search results do not exactly match the list video code', async () => {
+    const list = document.querySelector('.movie-list')!;
+    const item = renderListItem('ABC-010');
+    list.appendChild(item);
+    (STATE.settings as any).videoEnhancement.enableDrive115Match = true;
+    drive115RouterMock.searchFilesLegacyWeb.mockResolvedValue([
+      { name: 'ABC-0100.mp4', pickCode: 'bad', fileId: 'fid-bad', parentId: 'root', size: 1024, updatedAt: 100, raw: {} },
+    ]);
+
+    processVisibleItems();
+    const badge = await waitForDrive115Badge(item);
+
+    expect(badge?.textContent).toBe('未匹配');
+    expect(badge?.classList.contains('is-warning')).toBe(true);
   });
 
   it('hides VR list items when the display setting is enabled', async () => {

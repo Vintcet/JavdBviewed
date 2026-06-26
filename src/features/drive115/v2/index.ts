@@ -929,36 +929,69 @@ class Drive115V2Service {
       if (params.suffix) qs.set('suffix', String(params.suffix));
 
       await addLogV2({ timestamp: Date.now(), level: 'debug', message: `开始搜索（v2）：q="${String(params.search_value ?? '').slice(0, 50)}"` });
-      const res = await fetch(`${url}?${qs.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
+      let json: Drive115V2SearchResponse | undefined;
+      try {
+        if (typeof chrome !== 'undefined' && chrome.runtime?.id && typeof chrome.runtime.sendMessage === 'function') {
+          const bgResp: any = await new Promise((resolve) => {
+            try {
+              chrome.runtime.sendMessage(
+                {
+                  type: 'drive115.search_files_v2',
+                  payload: {
+                    accessToken: token,
+                    baseUrl: base,
+                    query: Object.fromEntries(qs.entries()),
+                  },
+                },
+                (resp) => resolve(resp)
+              );
+            } catch { resolve(undefined); }
+          });
+          if (bgResp && typeof bgResp.success === 'boolean') {
+            if (!bgResp.success) {
+              const msg = bgResp.message || '后台搜索请求失败';
+              await addLogV2({ timestamp: Date.now(), level: 'warn', message: msg });
+              return { success: false, message: msg, raw: bgResp.raw } as any;
+            }
+            json = (bgResp.raw || {}) as Drive115V2SearchResponse;
+          }
         }
-      });
+      } catch {}
 
-      if (!res.ok) {
-        const msg = `搜索网络错误: ${res.status} ${res.statusText}`;
-        await addLogV2({ timestamp: Date.now(), level: 'warn', message: msg });
-        return { success: false, message: msg } as any;
+      if (!json) {
+        const res = await fetch(`${url}?${qs.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!res.ok) {
+          const msg = `搜索网络错误: ${res.status} ${res.statusText}`;
+          await addLogV2({ timestamp: Date.now(), level: 'warn', message: msg });
+          return { success: false, message: msg } as any;
+        }
+
+        json = await res.json().catch(() => ({} as Drive115V2SearchResponse));
       }
 
-      const json: Drive115V2SearchResponse = await res.json().catch(() => ({} as any));
-      const ok = typeof json.state === 'boolean' ? json.state : true;
+      const searchResponse = json || ({} as Drive115V2SearchResponse);
+      const ok = typeof searchResponse.state === 'boolean' ? searchResponse.state : true;
       if (!ok) {
-        const msg = describe115Error(json) || json.message || '搜索失败';
+        const msg = describe115Error(searchResponse) || searchResponse.message || '搜索失败';
         await addLogV2({ timestamp: Date.now(), level: 'warn', message: `搜索失败：${msg}` });
-        return { success: false, message: msg, raw: json } as any;
+        return { success: false, message: msg, raw: searchResponse } as any;
       }
-      const data = Array.isArray(json?.data) ? json.data as Drive115V2SearchItem[] : undefined;
+      const data = Array.isArray(searchResponse.data) ? searchResponse.data as Drive115V2SearchItem[] : undefined;
       await addLogV2({ timestamp: Date.now(), level: 'info', message: `搜索成功（v2）：返回 ${Array.isArray(data) ? data.length : 0} 条` });
       return {
         success: true,
-        count: typeof json.count === 'number' ? json.count : undefined,
+        count: typeof searchResponse.count === 'number' ? searchResponse.count : undefined,
         data,
-        limit: typeof json.limit === 'number' ? json.limit : undefined,
-        offset: typeof json.offset === 'number' ? json.offset : undefined,
-        raw: json,
+        limit: typeof searchResponse.limit === 'number' ? searchResponse.limit : undefined,
+        offset: typeof searchResponse.offset === 'number' ? searchResponse.offset : undefined,
+        raw: searchResponse,
       } as any;
     } catch (e: any) {
       const msg = describe115Error(e) || e?.message || '搜索失败';

@@ -212,6 +212,32 @@ function safeToString(x: any): string {
   }
 }
 
+function looksLikeConsoleCss(value: any): boolean {
+  if (typeof value !== 'string') return false;
+  return /(?:^|;)\s*(?:color|background(?:-color)?|font(?:-weight|-size|-family)?|font|padding|margin|border|display|line-height)\s*:/i.test(value);
+}
+
+function isGeneratedConsolePrefix(value: string): boolean {
+  return /^\[\d{2}:\d{2}:\d{2}\]\s+\[(?:DEBUG|INFO|WARN|ERROR)\]\s+\[[^\]]+\]\s*$/.test(value.trim());
+}
+
+function normalizePersistedArgs(args: any[]): any[] {
+  if (args.length === 0) return args;
+  const [first, ...rest] = args;
+  if (typeof first !== 'string' || !first.includes('%c')) return args;
+
+  const cssTokenCount = (first.match(/%c/g) || []).length;
+  const unstyledFirst = first.replace(/%c/g, '').trim();
+  let restStart = 0;
+  while (restStart < rest.length && restStart < cssTokenCount && looksLikeConsoleCss(rest[restStart])) {
+    restStart += 1;
+  }
+
+  const payload = rest.slice(restStart);
+  if (isGeneratedConsolePrefix(unstyledFirst) && payload.length > 0) return payload;
+  return [unstyledFirst, ...payload].filter((arg) => !(typeof arg === 'string' && arg.length === 0));
+}
+
 function pickCategory(args: any[], categories: Record<string, CategoryRule>): string {
   // try match by scanning first 2-3 args as string
   const sample = args
@@ -337,7 +363,8 @@ function wrapMethod(level: Exclude<LogLevel, 'OFF'>, native: (...args: any[]) =>
       // 将 INFO/WARN/ERROR 控制台输出持久化至后台 IDB 日志（避免 DEBUG 造成高写入量）
       try {
         if (level !== 'DEBUG' && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-          const serialized = cleanedArgs.map((a) => safeToString(a)).join(' ');
+          const persistedArgs = normalizePersistedArgs(cleanedArgs);
+          const serialized = persistedArgs.map((a) => safeToString(a)).join(' ');
           const entry: any = {
             timestamp: new Date().toISOString(),
             level,

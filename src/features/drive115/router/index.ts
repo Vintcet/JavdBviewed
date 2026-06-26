@@ -5,6 +5,8 @@
 
 import type { Drive115BatchOptionsUnified, Drive115OfflineOptionsUnified } from '../app';
 import { getDrive115AppService } from '../app';
+import { mapLegacySearchResult } from '../app/adapters';
+import type { Drive115File } from '../app/types';
 
 export async function isDrive115Enabled(): Promise<boolean> {
   return getDrive115AppService().isEnabled();
@@ -12,6 +14,39 @@ export async function isDrive115Enabled(): Promise<boolean> {
 
 export async function searchFiles(query: string) {
   return getDrive115AppService().searchFiles(query);
+}
+
+export async function searchFilesLegacyWeb(query: string): Promise<Drive115File[]> {
+  const searchValue = String(query || '').trim().toLowerCase().replace(/^fc2-/, '');
+  if (!searchValue) return [];
+
+  const resp: any = await new Promise((resolve) => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.id || typeof chrome.runtime.sendMessage !== 'function') {
+        resolve({ success: false, message: '扩展后台不可用' });
+        return;
+      }
+      chrome.runtime.sendMessage(
+        {
+          type: 'drive115.search_files_legacy',
+          payload: {
+            searchValue,
+            offset: 0,
+            limit: 30,
+          },
+        },
+        (messageResp) => resolve(messageResp),
+      );
+    } catch (error: any) {
+      resolve({ success: false, message: error?.message || '旧接口搜索异常' });
+    }
+  });
+
+  if (!resp?.success) {
+    throw new Error(resp?.message || '旧接口搜索失败');
+  }
+
+  return Array.isArray(resp.data) ? resp.data.map(mapLegacySearchResult) : [];
 }
 
 export async function downloadOffline(options: Drive115OfflineOptionsUnified) {

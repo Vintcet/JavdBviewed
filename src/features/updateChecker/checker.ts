@@ -32,6 +32,7 @@ export interface UpdateCheckDecision {
 export const DEFAULT_UPDATE_CHECK_INTERVAL_HOURS = 24;
 export const LAST_UPDATE_CHECK_KEY = 'lastUpdateCheck';
 export const LAST_UPDATE_RESULT_KEY = 'lastUpdateResult';
+export const REMOTE_UPDATE_CHECK_DISABLED = true;
 
 // 获取当前扩展版本（从 manifest 读取，适用于 background/service worker）
 export function getCurrentVersion(): string {
@@ -249,11 +250,11 @@ async function fetchLatestReleaseFromJsDelivr(): Promise<GitHubRelease | null> {
     }
     
     // 如果 jsdelivr 也失败，尝试直接从 GitHub 页面抓取
-    console.warn('jsdelivr no tags, trying GitHub page scraping...');
+    console.debug('jsdelivr no tags, trying GitHub page scraping...');
     return await fetchLatestReleaseFromGitHubPage();
   } catch (err: any) {
     // 最后尝试从 GitHub 页面抓取
-    console.warn('jsdelivr failed, trying GitHub page scraping...');
+    console.debug('jsdelivr failed, trying GitHub page scraping...');
     return await fetchLatestReleaseFromGitHubPage();
   }
 }
@@ -299,7 +300,22 @@ async function fetchLatestReleaseFromGitHubPage(): Promise<GitHubRelease | null>
 }
 
 export async function checkForUpdates(includePrerelease = false): Promise<UpdateCheckResult> {
+  void includePrerelease;
   const current = getCurrentVersion();
+  if (REMOTE_UPDATE_CHECK_DISABLED) {
+    const checkedAt = new Date().toISOString();
+    return {
+      currentVersion: current,
+      latestVersion: current,
+      hasUpdate: false,
+      releaseUrl: '',
+      changelog: '远程更新检查已暂时关闭',
+      checkedAt,
+      skipped: true,
+      reason: 'disabled',
+    };
+  }
+
   try {
     console.log(`[UpdateChecker] Checking for updates... Current version: ${current}`);
     
@@ -342,6 +358,14 @@ export async function checkForUpdatesWithPolicy(
   includePrerelease = false,
 ): Promise<UpdateCheckResult> {
   const current = getCurrentVersion();
+  if (REMOTE_UPDATE_CHECK_DISABLED) {
+    return {
+      ...(await checkForUpdates(includePrerelease)),
+      skipped: true,
+      reason: 'disabled',
+    };
+  }
+
   const decision = shouldRunUpdateCheck({
     ...policy,
     lastCheckedAt: policy.lastCheckedAt ?? localStorage.getItem(LAST_UPDATE_CHECK_KEY),

@@ -26,7 +26,7 @@ export function mapLegacySearchResult(item: Drive115LegacyLikeSearchResult | any
     fileId: String(item?.fid || item?.file_id || ''),
     parentId: String(item?.cid || item?.parent_id || ''),
     size: Number(item?.s || item?.file_size || 0) || 0,
-    updatedAt: toUnixSeconds(item?.t || item?.user_utime || 0),
+    updatedAt: toUnixSeconds(item?.te || item?.t || item?.user_utime || 0),
     raw: item,
   };
 }

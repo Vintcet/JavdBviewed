@@ -6,6 +6,7 @@ import { ensureListTagContainer, renderLibraryStatusBadges } from '../../embyLib
 import { buildRealtimeCheckConfig, embyLibraryRealtimeCheckQueue } from '../../embyLibrary/content/realtimeCheck';
 import { isPageProperlyLoaded } from '../../videoDetail';
 import { renderListStatusQuickActions } from './statusQuickActions';
+import { renderDrive115ListMatchTag } from './drive115ListMatch';
 
 export interface ProcessVisibleItemsOptions {
     force?: boolean;
@@ -290,6 +291,7 @@ function processItem(item: HTMLElement): string | null {
     // 移除默认隐藏标记
     item.removeAttribute('data-hidden-by-default');
     item.removeAttribute('data-hide-reason');
+    renderDrive115ListMatchTag(item, videoId, STATE.settings);
     return videoId;
 }
 

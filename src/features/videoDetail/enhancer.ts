@@ -1435,8 +1435,8 @@ export class VideoDetailEnhancer {
 
     const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
     const coverColumn = document.querySelector<HTMLElement>('.column-video-cover');
-    const coverImage = coverColumn?.querySelector<HTMLElement>('a[data-fancybox="gallery"], a[href*="/covers/"], img.video-cover, img');
-    const insertAfter = coverImage || magnetPanel || magnetsContent;
+    const detailHeader = coverColumn?.closest<HTMLElement>('.columns') || null;
+    const insertAfter = detailHeader && !detailHeader.contains(magnetsContent) ? detailHeader : null;
     let panel = document.getElementById(DRIVE115_MATCH_PANEL_ID) as HTMLElement | null;
 
     if (!panel) {
@@ -1457,22 +1457,26 @@ export class VideoDetailEnhancer {
         panel?.removeAttribute('data-jdb-drive115-loaded');
         await this.runDrive115Match();
       });
+      const stopPanelEvent = (event: Event) => {
+        event.stopPropagation();
+      };
+      panel.addEventListener('click', stopPanelEvent, true);
+      panel.addEventListener('pointerdown', stopPanelEvent, true);
+      panel.addEventListener('mousedown', stopPanelEvent, true);
+      panel.addEventListener('touchstart', stopPanelEvent, true);
     }
 
     panel.classList.remove('is-hidden');
-    panel.classList.toggle('jdb-drive115-match-under-cover', !!coverColumn);
+    panel.classList.remove('jdb-drive115-match-under-cover');
     panel.removeAttribute('hidden');
     panel.style.display = 'block';
 
-    if (coverColumn) {
-      coverColumn.style.height = 'auto';
-      coverColumn.style.maxHeight = 'none';
-      coverColumn.style.overflow = 'visible';
-      if (panel.parentElement !== coverColumn || panel.previousElementSibling !== insertAfter) {
-        insertAfter.insertAdjacentElement('afterend', panel);
-      }
-    } else if (insertAfter.parentElement && panel.previousElementSibling !== insertAfter) {
+    if (insertAfter?.parentElement && panel.previousElementSibling !== insertAfter) {
       insertAfter.insertAdjacentElement('afterend', panel);
+    } else if (magnetPanel?.parentElement && panel.nextElementSibling !== magnetPanel) {
+      magnetPanel.parentElement.insertBefore(panel, magnetPanel);
+    } else if (!panel.parentElement && magnetsContent.parentElement) {
+      magnetsContent.parentElement.insertBefore(panel, magnetsContent);
     }
 
     return panel;
@@ -1516,17 +1520,42 @@ export class VideoDetailEnhancer {
     return String(value || '').trim().toUpperCase().replace(/[_\s]+/g, '-');
   }
 
-  private filterDrive115MatchResults(files: Drive115File[], videoId: string): Drive115File[] {
+  private escapeDrive115MatchPattern(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  private buildDrive115MatchPattern(videoId: string): RegExp | null {
     const code = this.normalizeDrive115MatchCode(videoId);
+    if (!code) return null;
+
+    const fc2 = code.match(/^FC2-(?:PPV-)?(\d+)$/);
+    if (fc2) {
+      return new RegExp(`(^|[^A-Z0-9])FC2[-_\\s]*(?:PPV[-_\\s]*)?${this.escapeDrive115MatchPattern(fc2[1])}(?=$|[^A-Z0-9])`, 'i');
+    }
+
+    const parts = code.split(/[^A-Z0-9]+/).filter(Boolean);
+    if (parts.length === 0) return null;
+
+    const body = parts.map(part => this.escapeDrive115MatchPattern(part)).join('[-_\\s.]*');
+    return new RegExp(`(^|[^A-Z0-9])${body}(?=$|[^A-Z0-9])`, 'i');
+  }
+
+  private isDrive115VideoFileName(name: string): boolean {
+    return /\.(mp4|mkv|avi|mov|wmv|flv|ts|m4v|iso)$/i.test(name || '');
+  }
+
+  private filterDrive115MatchResults(files: Drive115File[], videoId: string): Drive115File[] {
+    const pattern = this.buildDrive115MatchPattern(videoId);
+    if (!pattern) return [];
+
     const matched = (Array.isArray(files) ? files : [])
       .filter(file => {
-        const name = this.normalizeDrive115MatchCode(file.name || '');
-        if (!code || !name.includes(code)) return false;
-        return /\.(mp4|mkv|avi|mov|wmv|flv|ts|m4v|iso)$/i.test(file.name || '') || !(file.name || '').includes('.');
+        const name = String(file.name || '');
+        return !!(file.fileId || file.pickCode) && this.isDrive115VideoFileName(name) && pattern.test(name);
       })
       .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
-    return matched.length > 0 ? matched : (Array.isArray(files) ? files : []).slice(0, 10);
+    return matched;
   }
 
   private formatDrive115FileSize(bytes: number): string {
@@ -1609,6 +1638,10 @@ export class VideoDetailEnhancer {
         --jdb-115-muted: #64748b;
         --jdb-115-accent: #0f766e;
         --jdb-115-accent-bg: #ccfbf1;
+        position: relative !important;
+        z-index: 2147483000 !important;
+        pointer-events: auto !important;
+        clear: both;
         margin-top: 16px !important;
         margin-bottom: 0 !important;
         background: transparent !important;
@@ -1617,6 +1650,7 @@ export class VideoDetailEnhancer {
       #${DRIVE115_MATCH_PANEL_ID}.jdb-drive115-match-under-cover {
         width: 100%;
         min-width: 0;
+        isolation: isolate;
       }
 
       html[data-theme="dark"] #${DRIVE115_MATCH_PANEL_ID} {

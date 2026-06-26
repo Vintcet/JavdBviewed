@@ -102,6 +102,7 @@ export interface Drive115LegacyLikeSearchResult {
   fid?: string;
   cid?: string;
   s?: number;
+  te?: number;
   t?: number;
   file_name?: string;
   pick_code?: string;
