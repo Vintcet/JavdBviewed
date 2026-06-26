@@ -8,6 +8,210 @@ function logDrive115Proxy(message: string, data?: any): void {
   } catch {}
 }
 
+const DRIVE115_LEGACY_COOKIE_STORAGE_KEY = 'drive115:legacyCookieJar:v1';
+const DRIVE115_LEGACY_COOKIE_NAMES = new Set(['UID', 'CID', 'SEID', 'KID']);
+const DRIVE115_LEGACY_COOKIE_NAME_ORDER = ['UID', 'CID', 'SEID', 'KID'];
+const DRIVE115_LEGACY_COOKIE_PERSIST_SECONDS = 30 * 24 * 60 * 60;
+const DRIVE115_LEGACY_COOKIE_DOMAIN = '.115.com';
+const DRIVE115_LEGACY_COOKIE_PATH = '/';
+const DRIVE115_LEGACY_COOKIE_URL = 'https://115.com/';
+
+interface StoredDrive115LegacyCookie {
+  name: string;
+  value: string;
+  domain?: string;
+  path?: string;
+  secure?: boolean;
+  httpOnly?: boolean;
+  sameSite?: string;
+  expirationDate?: number;
+  storedAt: number;
+}
+
+interface StoredDrive115LegacyCookieJar {
+  updatedAt: number;
+  cookies: StoredDrive115LegacyCookie[];
+}
+
+function canUseDrive115CookieApi(): boolean {
+  return typeof chrome !== 'undefined'
+    && !!chrome.cookies?.getAll
+    && !!chrome.cookies?.set
+    && !!chrome.storage?.local;
+}
+
+function storageGet<T>(key: string): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    try {
+      chrome.storage.local.get(key, (result) => {
+        resolve(result?.[key] as T | undefined);
+      });
+    } catch {
+      resolve(undefined);
+    }
+  });
+}
+
+function storageSet(key: string, value: any): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      chrome.storage.local.set({ [key]: value }, () => resolve());
+    } catch {
+      resolve();
+    }
+  });
+}
+
+function getCookies(details: chrome.cookies.GetAllDetails): Promise<chrome.cookies.Cookie[]> {
+  return new Promise((resolve) => {
+    try {
+      chrome.cookies.getAll(details, (cookies) => resolve(Array.isArray(cookies) ? cookies : []));
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
+function setCookie(details: chrome.cookies.SetDetails): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      chrome.cookies.set(details, (cookie) => resolve(!!cookie));
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function normalizeDrive115Cookie(cookie: chrome.cookies.Cookie): StoredDrive115LegacyCookie | null {
+  if (!DRIVE115_LEGACY_COOKIE_NAMES.has(cookie.name) || !cookie.value) return null;
+  return {
+    name: cookie.name,
+    value: cookie.value,
+    domain: DRIVE115_LEGACY_COOKIE_DOMAIN,
+    path: DRIVE115_LEGACY_COOKIE_PATH,
+    secure: true,
+    httpOnly: cookie.httpOnly === true,
+    sameSite: 'no_restriction',
+    expirationDate: typeof cookie.expirationDate === 'number' ? cookie.expirationDate : undefined,
+    storedAt: Date.now(),
+  };
+}
+
+function buildCookieSetDetails(cookie: StoredDrive115LegacyCookie): chrome.cookies.SetDetails {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const persistedExpiry = nowSec + DRIVE115_LEGACY_COOKIE_PERSIST_SECONDS;
+  const expirationDate = Math.max(Number(cookie.expirationDate || 0), persistedExpiry);
+  const details: chrome.cookies.SetDetails = {
+    url: DRIVE115_LEGACY_COOKIE_URL,
+    name: cookie.name,
+    value: cookie.value,
+    domain: DRIVE115_LEGACY_COOKIE_DOMAIN,
+    path: DRIVE115_LEGACY_COOKIE_PATH,
+    secure: true,
+    httpOnly: cookie.httpOnly === true,
+    // Extension background fetches are cross-site to 115; SameSite=Lax cookies may be withheld.
+    sameSite: 'no_restriction',
+    expirationDate,
+  };
+
+  return details;
+}
+
+function getDrive115CookieScore(cookie: chrome.cookies.Cookie): number {
+  let score = 0;
+  if (cookie.domain === DRIVE115_LEGACY_COOKIE_DOMAIN) score += 40;
+  else if (cookie.domain?.endsWith('.115.com')) score += 20;
+  else if (cookie.domain === '115.com') score += 10;
+  if (!cookie.session) score += 5;
+  if (typeof cookie.expirationDate === 'number') score += Math.min(4, Math.max(0, Math.floor((cookie.expirationDate - Date.now() / 1000) / 86400)));
+  if (cookie.secure) score += 1;
+  return score;
+}
+
+function selectDrive115LegacyCookies(cookies: chrome.cookies.Cookie[]): StoredDrive115LegacyCookie[] {
+  const bestByName = new Map<string, chrome.cookies.Cookie>();
+  for (const cookie of cookies) {
+    if (!DRIVE115_LEGACY_COOKIE_NAMES.has(cookie.name) || !cookie.value) continue;
+    const current = bestByName.get(cookie.name);
+    if (!current || getDrive115CookieScore(cookie) > getDrive115CookieScore(current)) {
+      bestByName.set(cookie.name, cookie);
+    }
+  }
+
+  return DRIVE115_LEGACY_COOKIE_NAME_ORDER
+    .map((name) => bestByName.get(name))
+    .filter((cookie): cookie is chrome.cookies.Cookie => !!cookie)
+    .map(normalizeDrive115Cookie)
+    .filter((cookie): cookie is StoredDrive115LegacyCookie => !!cookie);
+}
+
+async function persistDrive115LegacyCookies(cookies: StoredDrive115LegacyCookie[]): Promise<number> {
+  if (!canUseDrive115CookieApi()) return 0;
+  let count = 0;
+  for (const cookie of cookies) {
+    if (await setCookie(buildCookieSetDetails(cookie))) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+async function readStoredDrive115LegacyCookies(): Promise<StoredDrive115LegacyCookie[]> {
+  const jar = await storageGet<StoredDrive115LegacyCookieJar>(DRIVE115_LEGACY_COOKIE_STORAGE_KEY);
+  return Array.isArray(jar?.cookies) ? jar.cookies.filter(cookie => DRIVE115_LEGACY_COOKIE_NAMES.has(cookie.name) && !!cookie.value) : [];
+}
+
+async function captureDrive115LegacyCookies(): Promise<{ supported: boolean; count: number; names: string[] }> {
+  if (!canUseDrive115CookieApi()) {
+    return { supported: false, count: 0, names: [] };
+  }
+
+  const found = [
+    ...(await getCookies({ domain: '115.com' })),
+    ...(await getCookies({ url: DRIVE115_LEGACY_COOKIE_URL })),
+    ...(await getCookies({ url: 'https://webapi.115.com/' })),
+  ];
+  const cookies = selectDrive115LegacyCookies(found);
+
+  if (cookies.length === 0) {
+    return { supported: true, count: 0, names: [] };
+  }
+
+  const jar: StoredDrive115LegacyCookieJar = {
+    updatedAt: Date.now(),
+    cookies,
+  };
+  await storageSet(DRIVE115_LEGACY_COOKIE_STORAGE_KEY, jar);
+  await persistDrive115LegacyCookies(cookies);
+  logDrive115Proxy('legacy cookies captured', { count: cookies.length, names: cookies.map(cookie => cookie.name) });
+  return { supported: true, count: cookies.length, names: cookies.map(cookie => cookie.name) };
+}
+
+async function restoreDrive115LegacyCookies(): Promise<{ supported: boolean; count: number; names: string[] }> {
+  if (!canUseDrive115CookieApi()) {
+    return { supported: false, count: 0, names: [] };
+  }
+
+  const cookies = await readStoredDrive115LegacyCookies();
+  const count = await persistDrive115LegacyCookies(cookies);
+  logDrive115Proxy('legacy cookies restored', { count, names: cookies.map(cookie => cookie.name) });
+  return { supported: true, count, names: cookies.map(cookie => cookie.name) };
+}
+
+async function ensureDrive115LegacyCookies(): Promise<{ supported: boolean; count: number; names: string[]; source: 'stored' | 'current' | 'none' }> {
+  const restored = await restoreDrive115LegacyCookies();
+  if (restored.count > 0) {
+    return { ...restored, source: 'stored' };
+  }
+
+  const captured = await captureDrive115LegacyCookies();
+  if (captured.count > 0) {
+    return { ...captured, source: 'current' };
+  }
+
+  return { ...captured, source: 'none' };
+}
+
 export function installDrive115V2Proxy(): void {
   try {
     // 避免重复注册
@@ -248,6 +452,16 @@ export function installDrive115V2Proxy(): void {
             sendResponse({ success: false, message: e?.message || '后台搜索异常' });
             return false;
           }
+        } else if (message.type === 'drive115.capture_legacy_cookies') {
+          captureDrive115LegacyCookies()
+            .then((result) => sendResponse({ success: result.count > 0, ...result }))
+            .catch((err) => sendResponse({ success: false, message: err?.message || '115 Cookie 捕获失败' }));
+          return true;
+        } else if (message.type === 'drive115.restore_legacy_cookies') {
+          restoreDrive115LegacyCookies()
+            .then((result) => sendResponse({ success: result.count > 0, ...result }))
+            .catch((err) => sendResponse({ success: false, message: err?.message || '115 Cookie 恢复失败' }));
+          return true;
         } else if (message.type === 'drive115.search_files_legacy') {
           try {
             const searchValue = String(message?.payload?.searchValue || '').trim();
@@ -263,35 +477,64 @@ export function installDrive115V2Proxy(): void {
             url.searchParams.set('offset', String(offset));
             url.searchParams.set('limit', String(limit));
 
-            fetch(url.toString(), {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'X-Requested-With': 'XMLHttpRequest',
-              },
-            }).then(async (res) => {
-              const text = await res.text().catch(() => '');
-              let raw: any = {};
-              try {
-                raw = text ? JSON.parse(text) : {};
-              } catch {
-                raw = { rawText: text };
+            (async () => {
+              const cookieState = await ensureDrive115LegacyCookies();
+
+              const runSearch = async () => {
+                const res = await fetch(url.toString(), {
+                  method: 'GET',
+                  credentials: 'include',
+                  headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'X-Requested-With': 'XMLHttpRequest',
+                  },
+                });
+
+                const text = await res.text().catch(() => '');
+                let raw: any = {};
+                try {
+                  raw = text ? JSON.parse(text) : {};
+                } catch {
+                  raw = { rawText: text };
+                }
+
+                const data = Array.isArray(raw?.data) ? raw.data : [];
+                const errorMessage = raw?.error || raw?.message || (res.ok ? '' : `旧接口搜索网络错误: ${res.status}`);
+                const loginRequired = /登录|login|signin/i.test(String(errorMessage || text || ''));
+                const ok = res.ok && Array.isArray(raw?.data) && raw?.state !== false;
+                return {
+                  ok,
+                  raw,
+                  data,
+                  errorMessage,
+                  loginRequired,
+                  count: typeof raw?.count === 'number' ? raw.count : data.length,
+                };
+              };
+
+              let result = await runSearch();
+              let retryCookieState: Awaited<ReturnType<typeof ensureDrive115LegacyCookies>> | undefined;
+              if (!result.ok && result.loginRequired) {
+                await captureDrive115LegacyCookies();
+                retryCookieState = await ensureDrive115LegacyCookies();
+                if (retryCookieState.count > 0) {
+                  result = await runSearch();
+                }
               }
 
-              const data = Array.isArray(raw?.data) ? raw.data : [];
-              const message = raw?.error || raw?.message || (res.ok ? '' : `旧接口搜索网络错误: ${res.status}`);
-              const loginRequired = /登录|login|signin/i.test(String(message || text || ''));
-              const ok = res.ok && Array.isArray(raw?.data) && raw?.state !== false;
+              if (result.ok) {
+                void captureDrive115LegacyCookies();
+              }
               sendResponse({
-                success: ok,
-                message: ok ? undefined : (loginRequired ? '未登录115网盘' : (message || '旧接口搜索失败')),
-                raw,
-                data,
-                count: typeof raw?.count === 'number' ? raw.count : data.length,
-                loginRequired,
+                success: result.ok,
+                message: result.ok ? undefined : (result.loginRequired ? '未登录115网盘，请先打开 115.com 登录一次' : (result.errorMessage || '旧接口搜索失败')),
+                raw: result.raw,
+                data: result.data,
+                count: result.count,
+                loginRequired: result.loginRequired,
+                cookieState: retryCookieState ? { first: cookieState, retry: retryCookieState } : cookieState,
               });
-            }).catch((err) => {
+            })().catch((err) => {
               sendResponse({ success: false, message: err?.message || '后台旧接口搜索请求失败' });
             });
             return true;

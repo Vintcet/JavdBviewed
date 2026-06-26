@@ -24,6 +24,7 @@ describe('extension manifest contract', () => {
         'scripting',
         'notifications',
         'unlimitedStorage',
+        'cookies',
       ]),
     );
   });

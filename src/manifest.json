@@ -10,6 +10,7 @@
     "scripting",
     "notifications",
     "unlimitedStorage",
+    "cookies",
     "declarativeNetRequest"
   ],
   "host_permissions": [

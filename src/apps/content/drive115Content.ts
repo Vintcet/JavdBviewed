@@ -38,6 +38,10 @@ class Drive115ContentHandler {
   }
 
   private init(): void {
+    this.captureLegacyCookies();
+    window.setTimeout(() => this.captureLegacyCookies(), 1500);
+    window.setTimeout(() => this.captureLegacyCookies(), 5000);
+
     // 监听来自其他页面的消息
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log('[115 Content] 收到消息:', message, '发送者:', sender);
@@ -89,6 +93,20 @@ class Drive115ContentHandler {
         }
       });
     }, 1000);
+  }
+
+  private captureLegacyCookies(): void {
+    try {
+      chrome.runtime.sendMessage({ type: 'drive115.capture_legacy_cookies' }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn('[115 Content] Cookie 捕获请求失败:', chrome.runtime.lastError.message);
+          return;
+        }
+        console.log('[115 Content] Cookie 捕获结果:', response);
+      });
+    } catch (error) {
+      console.warn('[115 Content] Cookie 捕获异常:', error);
+    }
   }
 
   /**
