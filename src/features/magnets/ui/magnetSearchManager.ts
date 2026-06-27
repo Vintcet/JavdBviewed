@@ -189,8 +189,6 @@ export class MagnetSearchManager {
 
       // 注入统一样式，确保磁力列表布局不会溢出
       this.addUnifiedMagnetStyles();
-      this.hideNativeDetailTabs();
-      this.scheduleNativeDetailTabsHideRetries();
 
       // 添加搜索源标签
       if (searchEnabled) {
@@ -1197,80 +1195,6 @@ export class MagnetSearchManager {
 
     bar.appendChild(button);
     container.prepend(bar);
-  }
-
-  private hasNativeDetailTabSet(tabBar: HTMLElement): boolean {
-    const text = (tabBar.textContent || '').replace(/\s+/g, '');
-    const hasMagnetTab = /磁链|磁鏈|磁力|magnets?/i.test(text)
-      || !!tabBar.querySelector('a[href="#magnets"], a[href*="#magnets"], [data-movie-tab-target="magnets"], [data-tab="magnets"]');
-    const hasReviewTab = /短评|短評|评论|評論|reviews?/i.test(text)
-      || !!tabBar.querySelector('a[href="#reviews"], a[href*="#reviews"], [data-movie-tab-target="reviews"], [data-tab="reviews"]');
-    const hasListTab = /相关清单|相關清單|清单|清單|lists?/i.test(text)
-      || !!tabBar.querySelector('a[href="#lists"], a[href*="#lists"], [data-movie-tab-target="lists"], [data-tab="lists"]');
-
-    return hasMagnetTab && (hasReviewTab || hasListTab);
-  }
-
-  private collectNativeDetailTabBars(): HTMLElement[] {
-    const tabBars = new Set<HTMLElement>();
-    document.querySelectorAll<HTMLElement>([
-      '.tabs',
-      '[role="tablist"]',
-      '[data-controller*="movie-tab"]',
-      '#tabs-container > nav',
-      '#tabs-container > ul',
-      '#tabs-container > .buttons',
-    ].join(', ')).forEach((el) => tabBars.add(el));
-
-    document.querySelectorAll<HTMLElement>([
-      'a[href="#magnets"]',
-      'a[href*="#magnets"]',
-      '[data-movie-tab-target="magnets"]',
-      '[data-tab="magnets"]',
-      'a[href="#reviews"]',
-      'a[href*="#reviews"]',
-      '[data-movie-tab-target="reviews"]',
-      '[data-tab="reviews"]',
-      'a[href="#lists"]',
-      'a[href*="#lists"]',
-      '[data-movie-tab-target="lists"]',
-      '[data-tab="lists"]',
-    ].join(', ')).forEach((el) => {
-      const nearest = el.closest<HTMLElement>('.tabs, [role="tablist"], [data-controller*="movie-tab"], nav, ul, .buttons');
-      if (nearest) tabBars.add(nearest);
-    });
-
-    return Array.from(tabBars).filter((tabBar) => this.hasNativeDetailTabSet(tabBar));
-  }
-
-  private hideNativeDetailTabs(): void {
-    this.collectNativeDetailTabBars().forEach((tabBar) => {
-      if (!tabBar.classList.contains('jdb-hide-native-detail-tabs')) {
-        tabBar.classList.add('jdb-hide-native-detail-tabs');
-      }
-      if (tabBar.getAttribute('aria-hidden') !== 'true') {
-        tabBar.setAttribute('aria-hidden', 'true');
-      }
-      if (tabBar.style.display !== 'none') {
-        tabBar.style.display = 'none';
-      }
-    });
-
-    const magnetsContent = document.querySelector<HTMLElement>('#magnets-content');
-    if (magnetsContent) {
-      magnetsContent.hidden = false;
-      magnetsContent.removeAttribute('hidden');
-      magnetsContent.setAttribute('aria-hidden', 'false');
-      magnetsContent.classList.add('is-active');
-    }
-
-    magnetsContent?.closest<HTMLElement>('#tabs-container')?.classList.add('jdb-magnet-tabs-container');
-  }
-
-  private scheduleNativeDetailTabsHideRetries(): void {
-    window.setTimeout(() => this.hideNativeDetailTabs(), 300);
-    window.setTimeout(() => this.hideNativeDetailTabs(), 1200);
-    window.setTimeout(() => this.hideNativeDetailTabs(), 3000);
   }
 
   private decorateNativeMagnetRow(row: HTMLElement): void {
@@ -2519,28 +2443,6 @@ export class MagnetSearchManager {
       /* Bulma columns 在详情区的列允许收缩 */
       article.message.video-panel .columns > .column {
         min-width: 0 !important;
-      }
-
-      .jdb-hide-native-detail-tabs,
-      article.message.video-panel .tabs.jdb-hide-native-detail-tabs,
-      .video-panel .tabs.jdb-hide-native-detail-tabs,
-      #tabs-container > .jdb-hide-native-detail-tabs,
-      #tabs-container .jdb-hide-native-detail-tabs,
-      article.message.video-panel .tabs:has(a[href="#magnets"]):has(a[href="#reviews"]),
-      article.message.video-panel .tabs:has(a[href="#magnets"]):has(a[href="#lists"]),
-      article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="reviews"]),
-      article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="lists"]),
-      #tabs-container > .tabs:has(a[href="#magnets"]):has(a[href="#reviews"]),
-      #tabs-container > .tabs:has(a[href="#magnets"]):has(a[href="#lists"]),
-      #tabs-container > .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="reviews"]),
-      #tabs-container > .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="lists"]) {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
       }
 
       article.message.video-panel .message-body:has(#magnets-content),
