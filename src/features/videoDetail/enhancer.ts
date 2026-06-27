@@ -13,7 +13,7 @@ import { saveSubtaskDetail, yieldToMainThread } from '../../platform/tasks';
 import { initOrchestrator } from '../../apps/content/orchestrator';
 import { showEnhancementDone } from '../../platform/browser/enhancementLoadingIndicator';
 import { getJavdbTheme, isDarkTheme, type JavdbTheme } from '../../platform/browser/domUtils';
-import { addTaskUrlsV2, isDrive115Enabled, searchFiles as searchDrive115Files } from '../drive115/router';
+import { addTaskUrlsV2, isDrive115Enabled, searchFilesLegacyWeb as searchDrive115Files } from '../drive115/router';
 import type { Drive115File } from '../drive115/app/types';
 import {
   activatePreviewVideoPreload,
@@ -745,12 +745,12 @@ export class VideoDetailEnhancer {
           const runFlag = '__jdb_review_breaker_running__';
           if ((window as any)[runFlag]) return;
           (window as any)[runFlag] = true;
-          initOrchestrator.add('idle', async () => {
+          initOrchestrator.add('deferred', async () => {
             try {
               log('[ReviewBreaker] Review tab clicked, showing loading indicator immediately');
               const earlyLoadingIndicator = this.createEarlyLoadingIndicator();
               document.body.appendChild(earlyLoadingIndicator);
-              const reviewsRoot = (await this.waitForElement('div[data-movie-tab-target="reviews"], #reviews', 6000, 200)) as HTMLElement | null;
+              const reviewsRoot = (await this.waitForElement('div[data-movie-tab-target="reviews"], #reviews', 2000, 100)) as HTMLElement | null;
               earlyLoadingIndicator.remove();
               if (!reviewsRoot) {
                 log('[ReviewBreaker] Native #reviews container not found, skip.');
@@ -760,7 +760,7 @@ export class VideoDetailEnhancer {
             } finally {
               (window as any)[runFlag] = false;
             }
-          }, { label: 'videoEnhancement:runReviewBreaker:click', idle: true, idleTimeout: 5000, delayMs: 0 });
+          }, { label: 'videoEnhancement:runReviewBreaker:click', timeout: 6000, delayMs: 0 });
         };
 
         trigger.addEventListener('click', () => {
@@ -856,7 +856,7 @@ export class VideoDetailEnhancer {
   }
 
   private async ensureRelatedListsPanel(): Promise<HTMLElement | null> {
-    const tabsContainer = await this.waitForElement('#tabs-container', 6000, 200) as HTMLElement | null;
+    const tabsContainer = await this.waitForElement('#tabs-container', 2000, 100) as HTMLElement | null;
     if (!tabsContainer) return null;
 
     const existing = document.getElementById('jdb-related-lists-panel') as HTMLElement | null;
@@ -1430,13 +1430,15 @@ export class VideoDetailEnhancer {
   }
 
   private async ensureDrive115MatchPanel(): Promise<HTMLElement | null> {
-    const magnetsContent = await this.waitForElement('#magnets-content', 6000, 200) as HTMLElement | null;
-    if (!magnetsContent) return null;
-
-    const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;
+    const magnetsContent = (document.querySelector('#magnets-content')
+      || await this.waitForElement('#magnets-content', 800, 100)) as HTMLElement | null;
+    const magnetPanel = magnetsContent?.closest('.message, .video-panel') as HTMLElement | null;
     const coverColumn = document.querySelector<HTMLElement>('.column-video-cover');
     const detailHeader = coverColumn?.closest<HTMLElement>('.columns') || null;
-    const insertAfter = detailHeader && !detailHeader.contains(magnetsContent) ? detailHeader : null;
+    const insertAfter = detailHeader && (!magnetsContent || !detailHeader.contains(magnetsContent)) ? detailHeader : null;
+    const tabsContainer = document.querySelector<HTMLElement>('#tabs-container');
+    const fallbackBefore = tabsContainer || magnetPanel || document.querySelector<HTMLElement>('article.message.video-panel');
+    const fallbackParent = document.querySelector<HTMLElement>('.container') || document.body;
     let panel = document.getElementById(DRIVE115_MATCH_PANEL_ID) as HTMLElement | null;
 
     if (!panel) {
@@ -1475,8 +1477,12 @@ export class VideoDetailEnhancer {
       insertAfter.insertAdjacentElement('afterend', panel);
     } else if (magnetPanel?.parentElement && panel.nextElementSibling !== magnetPanel) {
       magnetPanel.parentElement.insertBefore(panel, magnetPanel);
-    } else if (!panel.parentElement && magnetsContent.parentElement) {
+    } else if (fallbackBefore?.parentElement && panel.nextElementSibling !== fallbackBefore) {
+      fallbackBefore.parentElement.insertBefore(panel, fallbackBefore);
+    } else if (!panel.parentElement && magnetsContent?.parentElement) {
       magnetsContent.parentElement.insertBefore(panel, magnetsContent);
+    } else if (!panel.parentElement) {
+      fallbackParent.appendChild(panel);
     }
 
     return panel;
@@ -1867,7 +1873,7 @@ export class VideoDetailEnhancer {
    * 处理评论破解逻辑
    */
   private async ensureReviewsBelowMagnets(): Promise<HTMLElement | null> {
-    const magnetsContent = await this.waitForElement('#magnets-content', 6000, 200) as HTMLElement | null;
+    const magnetsContent = await this.waitForElement('#magnets-content', 1200, 100) as HTMLElement | null;
     if (!magnetsContent) return null;
 
     const magnetPanel = magnetsContent.closest('.message, .video-panel') as HTMLElement | null;

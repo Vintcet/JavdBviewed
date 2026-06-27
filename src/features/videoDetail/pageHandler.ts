@@ -424,11 +424,11 @@ export function getVideoDetailTaskBlueprints(settings: any): VideoDetailTaskBlue
     }
 
     if ((settings as any)?.videoEnhancement?.enableReviewBreaker !== false) {
-        blueprints.push({ phase: 'idle', label: 'videoEnhancement:runReviewBreaker', dependsOn: ['videoStatus:initialSync'] });
+        blueprints.push({ phase: 'deferred', label: 'videoEnhancement:runReviewBreaker', timeout: 8000, dependsOn: ['videoStatus:initialSync'] });
     }
 
     if ((settings as any)?.videoEnhancement?.enableDrive115Match !== false) {
-        blueprints.push({ phase: 'idle', label: 'videoEnhancement:runDrive115Match', dependsOn: ['videoStatus:initialSync'] });
+        blueprints.push({ phase: 'deferred', label: 'videoEnhancement:runDrive115Match', timeout: 8000, dependsOn: ['videoStatus:initialSync'] });
     }
 
     if (enableRelatedLists) {
@@ -740,24 +740,21 @@ export async function handleVideoDetailPage(): Promise<void> {
             });
 
             if ((STATE.settings as any)?.videoEnhancement?.enableReviewBreaker !== false) {
-                initOrchestrator.add('idle', async () => {
+                initOrchestrator.add('deferred', async () => {
                     await videoDetailEnhancer.runReviewBreaker();
                 }, {
                     label: 'videoEnhancement:runReviewBreaker',
-                    idle: true,
-                    idleTimeout: 5000,
+                    timeout: 8000,
                     dependsOn: ['videoStatus:initialSync'],
                 });
             }
 
             if ((STATE.settings as any)?.videoEnhancement?.enableDrive115Match !== false) {
-                initOrchestrator.add('idle', async () => {
+                initOrchestrator.add('deferred', async () => {
                     await videoDetailEnhancer.runDrive115Match();
                 }, {
                     label: 'videoEnhancement:runDrive115Match',
-                    idle: true,
-                    idleTimeout: 5000,
-                    delayMs: 1200,
+                    timeout: 8000,
                     dependsOn: ['videoStatus:initialSync'],
                 });
             }
