@@ -1638,8 +1638,10 @@ export class VideoDetailEnhancer {
         --jdb-115-muted: #64748b;
         --jdb-115-accent: #0f766e;
         --jdb-115-accent-bg: #ccfbf1;
-        position: relative !important;
-        z-index: 2147483000 !important;
+        position: static !important;
+        z-index: auto !important;
+        inset: auto !important;
+        transform: none !important;
         pointer-events: auto !important;
         clear: both;
         margin-top: 16px !important;
