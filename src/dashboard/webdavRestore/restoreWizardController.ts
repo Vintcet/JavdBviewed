@@ -207,6 +207,7 @@ export class WebDAVRestoreWizardController {
       restoreMagnetPushLogs: this.readCheckboxValue('webdavRestoreMagnetPushLogs', false),
       restoreImportStats: this.readCheckboxValue('webdavRestoreImportStats', false),
       restoreNewWorks: this.readCheckboxValue('webdavRestoreNewWorks', false),
+      restoreLists: this.readCheckboxValue('webdavRestoreLists', false),
     });
   }
 

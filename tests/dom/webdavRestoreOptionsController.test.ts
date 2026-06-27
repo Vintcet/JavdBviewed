@@ -20,6 +20,10 @@ function mountRestoreOptionsDom(): void {
         <input type="checkbox" id="webdavRestoreMagnets">
         <small>磁链缓存说明</small>
       </div>
+      <div class="form-group-checkbox available">
+        <input type="checkbox" id="webdavRestoreLists">
+        <small>清单说明</small>
+      </div>
     </div>
   `;
 }
@@ -44,6 +48,7 @@ describe('WebDAV restore options controller', () => {
     const records = document.getElementById('webdavRestoreRecords') as HTMLInputElement;
     const actors = document.getElementById('webdavRestoreActorRecords') as HTMLInputElement;
     const magnets = document.getElementById('webdavRestoreMagnets') as HTMLInputElement;
+    const lists = document.getElementById('webdavRestoreLists') as HTMLInputElement;
 
     expect(settings.disabled).toBe(false);
     expect(settings.checked).toBe(true);
@@ -63,9 +68,13 @@ describe('WebDAV restore options controller', () => {
     expect(magnets.checked).toBe(false);
     expect(magnets.closest('.form-group-checkbox')?.classList.contains('unavailable')).toBe(true);
     expect(magnets.closest('.form-group-checkbox')?.innerHTML).toContain('磁链缓存在此备份中不可用');
+    expect(lists.disabled).toBe(true);
+    expect(lists.checked).toBe(false);
+    expect(lists.closest('.form-group-checkbox')?.classList.contains('unavailable')).toBe(true);
+    expect(lists.closest('.form-group-checkbox')?.innerHTML).toContain('清单 / 系列 / 番号在此备份中不可用');
     expect(logInfo).toHaveBeenCalledWith('恢复内容选项自动配置完成', {
       availableOptions: 4,
-      unavailableOptions: 5,
+      unavailableOptions: 6,
       cloudDataKeys: ['settings', 'data', 'actorRecords'],
     });
   });

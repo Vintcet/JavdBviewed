@@ -21,6 +21,7 @@ describe('WebDAV restore results model', () => {
           logs: { reason: 'not_selected' },
           magnetPushLogs: { error: 'failed' },
           newWorks: { hasSubs: true, hasRecords: false, hasConfig: false },
+          lists: { written: 3 },
         },
       },
       {
@@ -34,11 +35,12 @@ describe('WebDAV restore results model', () => {
         logs: [{ id: 1 }],
         idb: {
           magnets: [{ hash: 'a' }],
+          lists: [{ id: 'local_1' }, { id: 'series:abc' }, { id: 'label:FC2' }],
         },
       },
     );
 
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(10);
     expect(items.find(item => item.key === 'settings')).toMatchObject({
       title: '扩展设置',
       statusText: '已覆盖',
@@ -55,6 +57,7 @@ describe('WebDAV restore results model', () => {
       iconClass: 'fas fa-times text-danger',
     });
     expect(items.find(item => item.key === 'newWorks')?.details).toEqual(['云端：订阅 1 · 记录 2']);
+    expect(items.find(item => item.key === 'lists')?.details).toEqual(['云端：3 条', '写入：3 条']);
     expect(items.find(item => item.key === 'magnets')?.details).toEqual(['云端：1 条', '未选择']);
   });
 

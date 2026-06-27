@@ -63,6 +63,7 @@ describe('WebDAV restore unified executor controller', () => {
       restoreMagnetPushLogs: false,
       restoreImportStats: true,
       restoreNewWorks: true,
+      restoreLists: true,
     });
 
     expect(options.requireAuthIfRestricted).toHaveBeenCalledWith('webdav-sync', expect.any(Function), {
@@ -78,6 +79,7 @@ describe('WebDAV restore unified executor controller', () => {
     }));
     expect(options.showConfirm.mock.calls[0][0].message).toContain('<li>扩展设置</li>');
     expect(options.showConfirm.mock.calls[0][0].message).toContain('<li>观看记录</li>');
+    expect(options.showConfirm.mock.calls[0][0].message).toContain('<li>清单 / 系列 / 番号</li>');
     expect(options.showConfirm.mock.calls[0][0].message).toContain('<li>磁力推送日志</li>');
     expect(options.showRestoreProgress).toHaveBeenCalledTimes(1);
     expect(options.sendRuntimeMessage).toHaveBeenCalledWith({
@@ -90,6 +92,7 @@ describe('WebDAV restore unified executor controller', () => {
           viewed: true,
           actors: true,
           newWorks: true,
+          lists: true,
           logs: false,
           magnetPushLogs: true,
           importStats: true,
