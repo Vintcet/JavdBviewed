@@ -20,7 +20,7 @@ export function computeTaskDisposition(input: {
 }): 'active' | 'stale' {
   if (!['leased', 'running'].includes(input.status)) return 'active';
   const heartbeatTs = typeof input.heartbeatTs === 'number' ? input.heartbeatTs : 0;
-  const staleWindowMs = Math.max(120_000, input.timeoutMs * 4);
+  const staleWindowMs = Math.max(300_000, input.timeoutMs * 4);
   if (heartbeatTs > 0 && input.now - heartbeatTs > staleWindowMs) {
     return 'stale';
   }

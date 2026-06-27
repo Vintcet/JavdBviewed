@@ -15,6 +15,12 @@ const DRIVE115_LEGACY_COOKIE_PERSIST_SECONDS = 30 * 24 * 60 * 60;
 const DRIVE115_LEGACY_COOKIE_DOMAIN = '.115.com';
 const DRIVE115_LEGACY_COOKIE_PATH = '/';
 const DRIVE115_LEGACY_COOKIE_URL = 'https://115.com/';
+const DRIVE115_LEGACY_SEARCH_MAX_ACTIVE = 2;
+const DRIVE115_LEGACY_SEARCH_START_INTERVAL_MS = 100;
+
+let activeDrive115LegacySearches = 0;
+let nextDrive115LegacySearchAt = 0;
+const drive115LegacySearchQueue: Array<() => void> = [];
 
 interface StoredDrive115LegacyCookie {
   name: string;
@@ -210,6 +216,42 @@ async function ensureDrive115LegacyCookies(): Promise<{ supported: boolean; coun
   }
 
   return { ...captured, source: 'none' };
+}
+
+function scheduleDrive115LegacySearch<T>(task: () => Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      activeDrive115LegacySearches += 1;
+      const now = Date.now();
+      const scheduledStartAt = Math.max(now, nextDrive115LegacySearchAt);
+      nextDrive115LegacySearchAt = scheduledStartAt + DRIVE115_LEGACY_SEARCH_START_INTERVAL_MS;
+      const waitMs = Math.max(0, scheduledStartAt - now);
+
+      const start = () => {
+        Promise.resolve()
+          .then(task)
+          .then(resolve, reject)
+          .finally(() => {
+            activeDrive115LegacySearches = Math.max(0, activeDrive115LegacySearches - 1);
+            const next = drive115LegacySearchQueue.shift();
+            if (next) next();
+          });
+      };
+
+      if (waitMs > 0) setTimeout(start, waitMs);
+      else start();
+    };
+
+    if (activeDrive115LegacySearches < DRIVE115_LEGACY_SEARCH_MAX_ACTIVE) {
+      run();
+    } else {
+      drive115LegacySearchQueue.push(run);
+      logDrive115Proxy('legacy search queued', {
+        active: activeDrive115LegacySearches,
+        queued: drive115LegacySearchQueue.length,
+      });
+    }
+  });
 }
 
 export function installDrive115V2Proxy(): void {
@@ -477,7 +519,7 @@ export function installDrive115V2Proxy(): void {
             url.searchParams.set('offset', String(offset));
             url.searchParams.set('limit', String(limit));
 
-            (async () => {
+            scheduleDrive115LegacySearch(async () => {
               const cookieState = await ensureDrive115LegacyCookies();
 
               const runSearch = async () => {
@@ -525,7 +567,7 @@ export function installDrive115V2Proxy(): void {
               if (result.ok) {
                 void captureDrive115LegacyCookies();
               }
-              sendResponse({
+              return {
                 success: result.ok,
                 message: result.ok ? undefined : (result.loginRequired ? '未登录115网盘，请先打开 115.com 登录一次' : (result.errorMessage || '旧接口搜索失败')),
                 raw: result.raw,
@@ -533,8 +575,10 @@ export function installDrive115V2Proxy(): void {
                 count: result.count,
                 loginRequired: result.loginRequired,
                 cookieState: retryCookieState ? { first: cookieState, retry: retryCookieState } : cookieState,
-              });
-            })().catch((err) => {
+              };
+            }).then((response) => {
+              sendResponse(response);
+            }).catch((err) => {
               sendResponse({ success: false, message: err?.message || '后台旧接口搜索请求失败' });
             });
             return true;

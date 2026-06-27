@@ -15,9 +15,9 @@ export class GlobalTaskCenter {
   private store = new TaskStateStore();
   private dedupeIndex = new Map<string, string>();
   private readonly taskRetentionMs = 60 * 60 * 1000;
-  private readonly pendingTaskMaxAgeMs = 60 * 1000;
+  private readonly pendingTaskMaxAgeMs = 10 * 60 * 1000;
   private readonly pausedTaskMaxAgeMs = 3 * 60 * 1000;
-  private readonly hiddenRunningTaskMaxAgeMs = 45 * 1000;
+  private readonly hiddenRunningTaskMaxAgeMs = 5 * 60 * 1000;
   // P1 FIX: 跨页面依赖同步 - 在 background 维护全局已完成任务集合
   private completedTaskLabels = new Set<string>();
   private readonly storageKey = 'taskCenter:snapshot';
