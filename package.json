@@ -13,7 +13,7 @@
     "build": "rimraf dist-zip && node --import tsx scripts/build.ts",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run test:unit && pnpm run test:regression && pnpm run test:extension",
-    "test:unit": "vitest run --config vitest.unit.config.cjs",
+    "test:unit": "vitest run --no-cache --config vitest.unit.config.cjs",
     "test:regression": "vitest run --config vitest.regression.config.cjs",
     "test:dom": "vitest run --config vitest.dom.config.cjs",
     "test:extension": "vitest run --config vitest.extension.config.cjs",

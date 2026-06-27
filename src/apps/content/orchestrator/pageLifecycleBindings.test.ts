@@ -52,8 +52,9 @@ describe('orchestrator page lifecycle bindings', () => {
     });
   });
 
-  it('saves current metrics on beforeunload', () => {
+  it('saves current metrics on beforeunload when verbose diagnostics are enabled', () => {
     const { windowRef, dispatch } = createWindowStub();
+    windowRef.__JDB_VERBOSE = true;
     const sendMessage = vi.fn();
     const orchestrator = {
       getMetrics: vi.fn(() => ({
@@ -86,5 +87,34 @@ describe('orchestrator page lifecycle bindings', () => {
         timestamp: 123456,
       },
     });
+  });
+
+  it('does not save metrics on beforeunload during normal browsing', () => {
+    const { windowRef, dispatch } = createWindowStub();
+    const sendMessage = vi.fn();
+    const orchestrator = {
+      getMetrics: vi.fn(() => ({
+        totalTasks: 3,
+        completedTasks: 2,
+      })),
+    };
+
+    installOrchestratorPageLifecycleBindings(orchestrator, {
+      windowRef,
+      chromeRuntime: { sendMessage },
+      getPageContextFn: () => ({
+        pageUrl: 'https://javdb.com/v/abc123',
+        pageType: 'detail',
+        mainId: 'ABC-123',
+        pageInstanceId: 'page-1',
+      }),
+      now: () => 123456,
+      logger: { log: vi.fn(), warn: vi.fn() },
+    });
+
+    dispatch('beforeunload');
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(orchestrator.getMetrics).not.toHaveBeenCalled();
   });
 });

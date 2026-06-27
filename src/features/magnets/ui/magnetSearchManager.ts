@@ -2446,9 +2446,7 @@ export class MagnetSearchManager {
       }
 
       article.message.video-panel .message-body:has(#magnets-content),
-      article.message.video-panel #tabs-container,
-      article.message.video-panel .jdb-magnet-tabs-container,
-      #tabs-container.jdb-magnet-tabs-container {
+      article.message.video-panel #tabs-container {
         width: 100% !important;
         max-width: none !important;
         box-sizing: border-box !important;
@@ -2458,8 +2456,7 @@ export class MagnetSearchManager {
         padding-top: 12px !important;
       }
 
-      article.message.video-panel #magnets-content,
-      #tabs-container.jdb-magnet-tabs-container #magnets-content {
+      article.message.video-panel #magnets-content {
         width: 100% !important;
         max-width: none !important;
         min-height: 260px;

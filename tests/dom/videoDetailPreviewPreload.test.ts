@@ -18,14 +18,14 @@ describe('VideoDetailEnhancer preview media loading', () => {
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   });
 
-  it('creates preview videos with full preload enabled', () => {
+  it('creates preview videos with metadata preload by default', () => {
     const enhancer = new VideoDetailEnhancer() as any;
 
     const video = enhancer.createVideoElement([
       { url: 'https://example.test/sample.mp4', type: 'video/mp4' },
     ]);
 
-    expect(video.preload).toBe('auto');
+    expect(video.preload).toBe('metadata');
     expect(video.volume).toBe(0.35);
   });
 

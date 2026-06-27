@@ -15,8 +15,7 @@ export const TASK_BUCKET_LIMITS: Record<string, number> = {
 };
 
 function isVideoDetailEnhancementTask(label: string): boolean {
-  return label.startsWith('videoStatus:')
-    || label.startsWith('videoEnhancement:')
+  return label.startsWith('videoEnhancement:')
     || label === 'actorMarks:page'
     || label === 'actorRemarks:run'
     || label === 'videoFavoriteRating:init'

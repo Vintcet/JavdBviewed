@@ -166,7 +166,7 @@ describe('detail area visual polish', () => {
     expect(rows[10].classList.contains('jdb-magnet-page-hidden')).toBe(false);
   });
 
-  it('hides native detail tabs and expands the magnet content frame', () => {
+  it('keeps native detail tabs visible while expanding the magnet content frame', () => {
     const manager = new MagnetSearchManager() as any;
     document.body.innerHTML = `
       <article class="message video-panel">
@@ -186,14 +186,14 @@ describe('detail area visual polish', () => {
     `;
 
     manager.addUnifiedMagnetStyles();
-    manager.hideNativeDetailTabs();
     const tabs = document.querySelector<HTMLElement>('.tabs.no-bottom');
     const styleText = document.getElementById('unified-magnet-list-styles')?.textContent || '';
 
-    expect(tabs?.classList.contains('jdb-hide-native-detail-tabs')).toBe(true);
-    expect(tabs?.style.display).toBe('none');
-    expect(document.querySelector('#tabs-container')?.classList.contains('jdb-magnet-tabs-container')).toBe(true);
-    expect(styleText).toContain('.tabs.jdb-hide-native-detail-tabs');
+    expect(tabs?.classList.contains('jdb-hide-native-detail-tabs')).toBe(false);
+    expect(tabs?.style.display).toBe('');
+    expect(document.querySelector('#tabs-container')?.classList.contains('jdb-magnet-tabs-container')).toBe(false);
+    expect(styleText).not.toContain('jdb-hide-native-detail-tabs');
+    expect(styleText).not.toContain('jdb-magnet-tabs-container');
     expect(styleText).toContain('max-width: none !important');
   });
 

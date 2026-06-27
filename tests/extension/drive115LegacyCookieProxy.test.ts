@@ -58,10 +58,12 @@ describe('drive115 legacy cookie proxy', () => {
     });
     const sendMessage = installProxyForTest();
 
-    const response = await sendMessage({
+    const responsePromise = sendMessage({
       type: 'drive115.search_files_legacy',
       payload: { searchValue: 'ABC-001', offset: 0, limit: 30 },
     });
+    await vi.advanceTimersByTimeAsync(100);
+    const response = await responsePromise;
 
     expect(response.success).toBe(true);
     expect(response.cookieState).toMatchObject({ source: 'stored', count: 4 });
@@ -160,10 +162,12 @@ describe('drive115 legacy cookie proxy', () => {
       } as Response);
     const sendMessage = installProxyForTest();
 
-    const response = await sendMessage({
+    const responsePromise = sendMessage({
       type: 'drive115.search_files_legacy',
       payload: { searchValue: 'ABC-001', offset: 0, limit: 30 },
     });
+    await vi.advanceTimersByTimeAsync(100);
+    const response = await responsePromise;
 
     expect(response.success).toBe(true);
     expect(response.count).toBe(1);
