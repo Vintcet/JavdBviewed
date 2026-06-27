@@ -6,18 +6,22 @@ export interface VersionParts {
 export function normalizeBuildNumber(build: number | string | null | undefined): number | null {
     if (build === null || build === undefined || build === '') return null;
     const buildNumber = Number(build);
-    return Number.isFinite(buildNumber) ? buildNumber : null;
+    return Number.isInteger(buildNumber) && buildNumber >= 0 ? buildNumber : null;
 }
 
-export function formatManifestVersion(versionParts: VersionParts): string {
-    return versionParts.version;
-}
-
-export function formatArtifactVersion(versionParts: VersionParts): string {
+export function formatExtensionVersion(versionParts: VersionParts): string {
     const buildNumber = normalizeBuildNumber(versionParts.build);
     return buildNumber === null
         ? versionParts.version
-        : `${versionParts.version}-build-${buildNumber}`;
+        : `${versionParts.version}.${buildNumber}`;
+}
+
+export function formatManifestVersion(versionParts: VersionParts): string {
+    return formatExtensionVersion(versionParts);
+}
+
+export function formatArtifactVersion(versionParts: VersionParts): string {
+    return formatExtensionVersion(versionParts);
 }
 
 export function formatReleaseTag(version: string): string {

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { formatArtifactVersion } from './versioning';
+import { formatArtifactVersion, formatManifestVersion } from './versioning';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const versionFilePath = path.join(__dirname, '..', 'version.json');
@@ -72,13 +72,14 @@ function syncVersionArtifacts(versionData: VersionData) {
 
     if (fs.existsSync(packageFilePath)) {
         const packageJson = JSON.parse(fs.readFileSync(packageFilePath, 'utf8'));
+        // package.json must remain valid npm semver; the extension build number is stored separately.
         packageJson.version = versionData.version;
         writeJsonFile(packageFilePath, packageJson);
     }
 
     if (fs.existsSync(manifestFilePath)) {
         const manifestJson = JSON.parse(fs.readFileSync(manifestFilePath, 'utf8'));
-        manifestJson.version = versionData.version;
+        manifestJson.version = formatManifestVersion(versionData);
         writeJsonFile(manifestFilePath, manifestJson);
     }
 }
@@ -101,8 +102,9 @@ function generateAndWriteBuildVersion(versionData: VersionData, isReleaseCommit:
     const buildId = `+${gitHash}${gitState}-${timestamp}`;
 
     syncVersionArtifacts(versionData);
+    const artifactVersion = formatArtifactVersion(versionData);
     const envContent = [
-        `VITE_APP_VERSION=${versionData.version}`,
+        `VITE_APP_VERSION=${artifactVersion}`,
         `VITE_APP_BUILD_NUMBER=${versionData.build}`,
         `VITE_APP_GIT_HASH=${gitHash}`,
         `VITE_APP_VERSION_STATE=${simpleGitState}`,
@@ -112,8 +114,7 @@ function generateAndWriteBuildVersion(versionData: VersionData, isReleaseCommit:
     ].join('\n');
     fs.writeFileSync(viteEnvFilePath, envContent, 'utf8');
     
-    const artifactVersion = formatArtifactVersion(versionData);
-    console.log(`\x1b[32mVersion updated to: ${versionData.version} build ${versionData.build} (${buildId})\x1b[0m`);
+    console.log(`\x1b[32mVersion updated to: ${artifactVersion} (base ${versionData.version}, build ${versionData.build}, ${buildId})\x1b[0m`);
     console.log(`\x1b[32mArtifact version: ${artifactVersion}\x1b[0m`);
     console.log(`\x1b[32mVersion written to ${path.basename(viteEnvFilePath)} for Vite.\x1b[0m`);
 }

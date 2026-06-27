@@ -25,13 +25,13 @@ describe('version display helpers', () => {
         });
     });
 
-    it('normalizes legacy four-part manifest versions for display', () => {
+    it('preserves four-part extension versions for display', () => {
         const info = getDisplayVersionInfo({
             manifestVersion: '1.20.0.196',
             env: {},
         });
 
-        expect(info.version).toBe('1.20.0');
+        expect(info.version).toBe('1.20.0.196');
     });
 
     it('parses legacy build id when structured metadata is absent', () => {

@@ -9,6 +9,7 @@ const now = Date.parse('2026-05-19T08:00:00.000Z');
 assert.equal(normalizeReleaseVersion('v1.20.1'), '1.20.1');
 assert.equal(normalizeReleaseVersion('Release 1.20.1'), '1.20.1');
 assert.equal(normalizeReleaseVersion('my-javdb-v1.20.1-build-206.zip'), '1.20.1');
+assert.equal(normalizeReleaseVersion('my-javdb-v1.20.1.206.zip'), '1.20.1.206');
 
 assert.equal(
   shouldRunUpdateCheck({

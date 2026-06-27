@@ -28,7 +28,7 @@ interface LegacyBuildId {
     builtAt?: string;
 }
 
-const VERSION_PATTERN = /^(\d+\.\d+\.\d+)(?:\.\d+)?$/;
+const VERSION_PATTERN = /^(\d+\.\d+\.\d+(?:\.\d+)?)$/;
 const LEGACY_BUILD_ID_PATTERN = /^\+([^-]+)(?:-(dev|staged|dirty|unknown))?-(\d{12})$/;
 
 export function normalizeSemanticVersion(version: string | undefined): string {

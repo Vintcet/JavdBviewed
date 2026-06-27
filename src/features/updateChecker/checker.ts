@@ -46,8 +46,17 @@ export function getCurrentVersion(): string {
 
 export function normalizeReleaseVersion(value: string | undefined | null): string {
   if (!value) return '';
-  const match = value.trim().match(/v?(\d+\.\d+\.\d+(?:\.\d+)?(?:-[0-9A-Za-z.-]+)?)/);
-  return match ? match[1] : value.trim().replace(/^v/i, '');
+  const trimmed = value.trim();
+  const match = trimmed.match(/v?(\d+\.\d+\.\d+(?:\.\d+)?)(?:-([0-9A-Za-z][0-9A-Za-z.-]*))?/);
+  if (!match) return trimmed.replace(/^v/i, '').replace(/\.zip$/i, '');
+
+  const version = match[1];
+  const suffix = match[2]?.replace(/\.zip$/i, '');
+  if (!suffix || /^build-\d+$/i.test(suffix)) {
+    return version;
+  }
+
+  return `${version}-${suffix}`;
 }
 
 export function parseUpdateCheckIntervalHours(value: string | number | undefined): number {
