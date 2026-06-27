@@ -87,7 +87,6 @@ export class MagnetSearchManager {
   private sourceTagLatestResultCounts: Partial<Record<MagnetSourceKey, number>> = {};
   private sourceBackoffState: MagnetSourceBackoffState = {};
   private magnetQualityFilterEnabled = true;
-  private nativeDetailTabsObserver: MutationObserver | null = null;
 
   constructor(config: Partial<MagnetSearchConfig> = {}) {
     this.config = {
@@ -191,7 +190,7 @@ export class MagnetSearchManager {
       // 注入统一样式，确保磁力列表布局不会溢出
       this.addUnifiedMagnetStyles();
       this.hideNativeDetailTabs();
-      this.installNativeDetailTabsObserver();
+      this.scheduleNativeDetailTabsHideRetries();
 
       // 添加搜索源标签
       if (searchEnabled) {
@@ -1246,9 +1245,15 @@ export class MagnetSearchManager {
 
   private hideNativeDetailTabs(): void {
     this.collectNativeDetailTabBars().forEach((tabBar) => {
-      tabBar.classList.add('jdb-hide-native-detail-tabs');
-      tabBar.setAttribute('aria-hidden', 'true');
-      tabBar.style.display = 'none';
+      if (!tabBar.classList.contains('jdb-hide-native-detail-tabs')) {
+        tabBar.classList.add('jdb-hide-native-detail-tabs');
+      }
+      if (tabBar.getAttribute('aria-hidden') !== 'true') {
+        tabBar.setAttribute('aria-hidden', 'true');
+      }
+      if (tabBar.style.display !== 'none') {
+        tabBar.style.display = 'none';
+      }
     });
 
     const magnetsContent = document.querySelector<HTMLElement>('#magnets-content');
@@ -1262,21 +1267,10 @@ export class MagnetSearchManager {
     magnetsContent?.closest<HTMLElement>('#tabs-container')?.classList.add('jdb-magnet-tabs-container');
   }
 
-  private installNativeDetailTabsObserver(): void {
-    if (this.nativeDetailTabsObserver || typeof MutationObserver === 'undefined') return;
-
+  private scheduleNativeDetailTabsHideRetries(): void {
     window.setTimeout(() => this.hideNativeDetailTabs(), 300);
     window.setTimeout(() => this.hideNativeDetailTabs(), 1200);
     window.setTimeout(() => this.hideNativeDetailTabs(), 3000);
-
-    const root = document.querySelector('#tabs-container')?.parentElement || document.body;
-    this.nativeDetailTabsObserver = new MutationObserver(() => this.hideNativeDetailTabs());
-    this.nativeDetailTabsObserver.observe(root, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'href', 'data-movie-tab-target', 'data-tab', 'role'],
-    });
   }
 
   private decorateNativeMagnetRow(row: HTMLElement): void {
@@ -2720,8 +2714,6 @@ export class MagnetSearchManager {
    * 销毁磁力搜索功能
    */
   destroy(): void {
-    this.nativeDetailTabsObserver?.disconnect();
-    this.nativeDetailTabsObserver = null;
     this.isInitialized = false;
   }
 }
