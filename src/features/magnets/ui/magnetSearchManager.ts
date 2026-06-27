@@ -87,6 +87,7 @@ export class MagnetSearchManager {
   private sourceTagLatestResultCounts: Partial<Record<MagnetSourceKey, number>> = {};
   private sourceBackoffState: MagnetSourceBackoffState = {};
   private magnetQualityFilterEnabled = true;
+  private nativeDetailTabsObserver: MutationObserver | null = null;
 
   constructor(config: Partial<MagnetSearchConfig> = {}) {
     this.config = {
@@ -190,6 +191,7 @@ export class MagnetSearchManager {
       // 注入统一样式，确保磁力列表布局不会溢出
       this.addUnifiedMagnetStyles();
       this.hideNativeDetailTabs();
+      this.installNativeDetailTabsObserver();
 
       // 添加搜索源标签
       if (searchEnabled) {
@@ -1198,24 +1200,52 @@ export class MagnetSearchManager {
     container.prepend(bar);
   }
 
+  private hasNativeDetailTabSet(tabBar: HTMLElement): boolean {
+    const text = (tabBar.textContent || '').replace(/\s+/g, '');
+    const hasMagnetTab = /磁链|磁鏈|磁力|magnets?/i.test(text)
+      || !!tabBar.querySelector('a[href="#magnets"], a[href*="#magnets"], [data-movie-tab-target="magnets"], [data-tab="magnets"]');
+    const hasReviewTab = /短评|短評|评论|評論|reviews?/i.test(text)
+      || !!tabBar.querySelector('a[href="#reviews"], a[href*="#reviews"], [data-movie-tab-target="reviews"], [data-tab="reviews"]');
+    const hasListTab = /相关清单|相關清單|清单|清單|lists?/i.test(text)
+      || !!tabBar.querySelector('a[href="#lists"], a[href*="#lists"], [data-movie-tab-target="lists"], [data-tab="lists"]');
+
+    return hasMagnetTab && (hasReviewTab || hasListTab);
+  }
+
+  private collectNativeDetailTabBars(): HTMLElement[] {
+    const tabBars = new Set<HTMLElement>();
+    document.querySelectorAll<HTMLElement>([
+      '.tabs',
+      '[role="tablist"]',
+      '[data-controller*="movie-tab"]',
+      '#tabs-container > nav',
+      '#tabs-container > ul',
+      '#tabs-container > .buttons',
+    ].join(', ')).forEach((el) => tabBars.add(el));
+
+    document.querySelectorAll<HTMLElement>([
+      'a[href="#magnets"]',
+      'a[href*="#magnets"]',
+      '[data-movie-tab-target="magnets"]',
+      '[data-tab="magnets"]',
+      'a[href="#reviews"]',
+      'a[href*="#reviews"]',
+      '[data-movie-tab-target="reviews"]',
+      '[data-tab="reviews"]',
+      'a[href="#lists"]',
+      'a[href*="#lists"]',
+      '[data-movie-tab-target="lists"]',
+      '[data-tab="lists"]',
+    ].join(', ')).forEach((el) => {
+      const nearest = el.closest<HTMLElement>('.tabs, [role="tablist"], [data-controller*="movie-tab"], nav, ul, .buttons');
+      if (nearest) tabBars.add(nearest);
+    });
+
+    return Array.from(tabBars).filter((tabBar) => this.hasNativeDetailTabSet(tabBar));
+  }
+
   private hideNativeDetailTabs(): void {
-    const tabBars = Array.from(document.querySelectorAll<HTMLElement>([
-      'article.message.video-panel .tabs',
-      '.video-panel .tabs',
-      '#tabs-container > .tabs',
-    ].join(', ')));
-
-    tabBars.forEach((tabBar) => {
-      const text = (tabBar.textContent || '').replace(/\s+/g, '');
-      const hasMagnetTab = /磁链|磁鏈|magnet/i.test(text)
-        || !!tabBar.querySelector('a[href="#magnets"], a[href*="#magnets"], [data-movie-tab-target="magnets"]');
-      const hasReviewTab = /短评|短評|评论|評論|review/i.test(text)
-        || !!tabBar.querySelector('a[href="#reviews"], a[href*="#reviews"], [data-movie-tab-target="reviews"]');
-      const hasListTab = /相关清单|相關清單|清单|清單|list/i.test(text)
-        || !!tabBar.querySelector('a[href="#lists"], a[href*="#lists"], [data-movie-tab-target="lists"]');
-
-      if (!hasMagnetTab || (!hasReviewTab && !hasListTab)) return;
-
+    this.collectNativeDetailTabBars().forEach((tabBar) => {
       tabBar.classList.add('jdb-hide-native-detail-tabs');
       tabBar.setAttribute('aria-hidden', 'true');
       tabBar.style.display = 'none';
@@ -1230,6 +1260,23 @@ export class MagnetSearchManager {
     }
 
     magnetsContent?.closest<HTMLElement>('#tabs-container')?.classList.add('jdb-magnet-tabs-container');
+  }
+
+  private installNativeDetailTabsObserver(): void {
+    if (this.nativeDetailTabsObserver || typeof MutationObserver === 'undefined') return;
+
+    window.setTimeout(() => this.hideNativeDetailTabs(), 300);
+    window.setTimeout(() => this.hideNativeDetailTabs(), 1200);
+    window.setTimeout(() => this.hideNativeDetailTabs(), 3000);
+
+    const root = document.querySelector('#tabs-container')?.parentElement || document.body;
+    this.nativeDetailTabsObserver = new MutationObserver(() => this.hideNativeDetailTabs());
+    this.nativeDetailTabsObserver.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'href', 'data-movie-tab-target', 'data-tab', 'role'],
+    });
   }
 
   private decorateNativeMagnetRow(row: HTMLElement): void {
@@ -2480,17 +2527,32 @@ export class MagnetSearchManager {
         min-width: 0 !important;
       }
 
+      .jdb-hide-native-detail-tabs,
       article.message.video-panel .tabs.jdb-hide-native-detail-tabs,
+      .video-panel .tabs.jdb-hide-native-detail-tabs,
+      #tabs-container > .jdb-hide-native-detail-tabs,
+      #tabs-container .jdb-hide-native-detail-tabs,
       article.message.video-panel .tabs:has(a[href="#magnets"]):has(a[href="#reviews"]),
       article.message.video-panel .tabs:has(a[href="#magnets"]):has(a[href="#lists"]),
       article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="reviews"]),
-      article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="lists"]) {
+      article.message.video-panel .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="lists"]),
+      #tabs-container > .tabs:has(a[href="#magnets"]):has(a[href="#reviews"]),
+      #tabs-container > .tabs:has(a[href="#magnets"]):has(a[href="#lists"]),
+      #tabs-container > .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="reviews"]),
+      #tabs-container > .tabs:has([data-movie-tab-target="magnets"]):has([data-movie-tab-target="lists"]) {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
       }
 
       article.message.video-panel .message-body:has(#magnets-content),
       article.message.video-panel #tabs-container,
-      article.message.video-panel .jdb-magnet-tabs-container {
+      article.message.video-panel .jdb-magnet-tabs-container,
+      #tabs-container.jdb-magnet-tabs-container {
         width: 100% !important;
         max-width: none !important;
         box-sizing: border-box !important;
@@ -2500,7 +2562,8 @@ export class MagnetSearchManager {
         padding-top: 12px !important;
       }
 
-      article.message.video-panel #magnets-content {
+      article.message.video-panel #magnets-content,
+      #tabs-container.jdb-magnet-tabs-container #magnets-content {
         width: 100% !important;
         max-width: none !important;
         min-height: 260px;
@@ -2657,6 +2720,8 @@ export class MagnetSearchManager {
    * 销毁磁力搜索功能
    */
   destroy(): void {
+    this.nativeDetailTabsObserver?.disconnect();
+    this.nativeDetailTabsObserver = null;
     this.isInitialized = false;
   }
 }
